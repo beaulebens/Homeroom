@@ -5,6 +5,7 @@ Author: Beau Lebens
 Author URI: http://dentedreality.com.au/
 Description: Homeroom is a social-native theme that's built from the ground up to showcase all of your social media content. It uses the Keyring Social Importers to integrate with Flickr, Twitter, Delicious, Instagram and Foursquare.
 Version: 1.0
+Requires: 3.4;
 License: GNU General Public License
 License URI: license.txt
 Tags: social, lifelog, twitter, foursquare, delicious, instagram, flickr, personal, timeline, post formats, keyring
@@ -238,7 +239,7 @@ input[type="submit"] {
 	cursor: pointer; /* Improves usability and consistency of cursor style between image-type 'input' and others */
 	-webkit-appearance: button; /* Corrects inability to style clickable 'input' types in iOS */
 	font-size: 12px;
-	font-size: 1.4rem;
+	font-size: 1.2rem;
 	padding: 1.12em 1.5em .88em;
 	text-shadow: 0 1px 0 rgba(255,255,255,.5);
 }
@@ -289,6 +290,7 @@ input::-moz-focus-inner { /* Corrects inner padding and border displayed oddly i
 }
 input[type=text],
 input[type=email],
+input[type=password],
 textarea {
 	color: #666;
 	border: 1px solid #ccc;
@@ -296,10 +298,12 @@ textarea {
 }
 input[type=text]:focus,
 input[type=email]:focus,
+input[type=password]:focus,
 textarea:focus {
 	color: #111;
 }
 input[type=text],
+input[type=password],
 input[type=email] {
 	padding: 3px;
 }
@@ -460,6 +464,7 @@ a:active {
 }
 .site-header img,
 .entry-content img,
+.comment-content img[height],
 img[class*="align"],
 img[class*="wp-image-"] {
 	height: auto; /* Make sure images with WordPress-added height and width attributes are scaled correctly */
@@ -479,14 +484,10 @@ img.size-full {
 }
 .wp-caption {
 	border: 1px solid #ccc;
+	margin-bottom: 1.5em;
 	max-width: 100%;
 }
-.wp-caption.aligncenter,
-.wp-caption.alignleft,
-.wp-caption.alignright {
-	margin-bottom: 1.5em;
-}
-.wp-caption img {
+.wp-caption img[class*="wp-image-"] {
 	display: block;
 	margin: 1.2% auto 0;
 	max-width: 98%;
@@ -551,6 +552,11 @@ object {
 
 .widget {
 	margin: 0 0 1.5em;
+}
+
+/* Make sure select elements fit in widgets */
+.widget select {
+	max-width: 100%;
 }
 
 /* Search widget */

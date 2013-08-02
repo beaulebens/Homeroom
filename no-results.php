@@ -17,7 +17,7 @@
 	<div class="entry-content">
 		<?php if ( is_home() ) { ?>
 
-			<p><?php printf( __( 'Ready to publish your first post? <a href="%1$s">Get started here</a>.', 'homeroom' ), admin_url( 'post-new.php' ) ); ?></p>
+			<p><?php printf( __( 'Ready to publish your first post? <a href="%1$s">Get started here</a>.', 'homeroom' ), esc_url( admin_url( 'post-new.php' ) ) ); ?></p>
 
 		<?php } elseif ( is_search() ) { ?>
 

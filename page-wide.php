@@ -1,11 +1,9 @@
 <?php
 /**
- * The template for displaying all pages.
+ * Template Name: Wide Page (no sidebar)
  *
- * This is the template that displays all pages by default.
- * Please note that this is the WordPress construct of pages
- * and that other 'pages' on your WordPress site will use a
- * different template.
+ * The template for displaying pages with more content, or
+ * where you don't need/want a sidebar
  *
  * @package Homeroom
  * @since Homeroom 1.0
@@ -21,9 +19,9 @@ get_header(); ?>
 
 						<?php get_template_part( 'singular', 'page' ); ?>
 
-						<?php comments_template( '', true ); ?>
-
 						<?php get_template_part( 'related-posts' ); ?>
+
+						<?php comments_template( '', true ); ?>
 
 					<?php endwhile; // end of the loop. ?>
 
@@ -31,5 +29,4 @@ get_header(); ?>
 			</div><!-- #content -->
 		</div><!-- #primary .site-content -->
 
-<?php get_sidebar(); ?>
 <?php get_footer(); ?>

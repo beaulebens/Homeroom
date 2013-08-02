@@ -6,15 +6,23 @@
 ?>
 
 <?php $this_post_format = get_post_format(); ?>
-<article class="shadow f-<?php echo esc_attr( $this_post_format ); ?>">
+<?php do_action( 'before_post' ); ?>
+<article class="f-<?php echo esc_attr( $this_post_format ); ?>">
 	<?php
-	$this_post_format = get_post_format();
+	get_template_part( 'once',    $this_post_format ); // Anything that happens once per grouping of posts
+
 	get_template_part( 'snippet', $this_post_format );
 
 	// On the homepage, we do some lookahead magic and collapse posts a bit
-	// Don't collapse images, they look better in their own bubbles
+	// Don't collapse images, they deserve full display, always
 	// Break for each new day also
-	if ( is_home() && 'image' != $this_post_format ) {
+	if (
+		Homeroom::get_option( 'collapse_consecutive_posts' )
+	&&
+		is_home()
+	&&
+		'image' != $this_post_format
+	) {
 		$temp_post = $post;
 		$first = true;
 		while ( true ) {
@@ -24,7 +32,7 @@
 			if ( !$next || $this_post_format != get_post_format( $next ) )
 				break;
 
-			// Different day?
+			// Different day? @todo, - decide on time/hour to split?
 			if ( get_the_date( 'Y-m-d' ) != substr( $next->post_date, 0, strpos( $next->post_date, ' ' ) ) )
 				break;
 
@@ -40,8 +48,9 @@
 			get_template_part( 'snippet', $this_post_format );
 		}
 		if ( $next ) { // If there was a $next, but it wasn't an Aside
-			if ( !$first )
+			if ( !$first ) {
 				echo '</div>'; // collapse wrapper
+			}
 			homeroom_prev_post(); // dial it back a notch
 			$post = $temp_post;
 		}
@@ -49,3 +58,4 @@
 
 	?>
 </article>
+<?php do_action( 'after_post' ); ?>

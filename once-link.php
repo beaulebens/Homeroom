@@ -1,0 +1,1 @@
+<span class="icon-link format-icon"> </span>

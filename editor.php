@@ -1,12 +1,19 @@
 <?php
 
-if ( !is_home() || !is_user_logged_in() || !current_user_can( 'publish_posts' ) || get_query_var( 'paged' ) )
+if ( !Homeroom::get_option( 'enable_frontend_postbox' ) || !is_home() || !is_user_logged_in() || !current_user_can( 'publish_posts' ) || get_query_var( 'paged' ) )
 	return;
 
-?>
-<div id="open-editor" class="shadow"></div>
+require_once get_template_directory() . '/inc/admin.php';
 
-<article id="editor" class="shadow">
+?>
+<div id="open-editor"></div>
+
+<article id="editor">
+	<?php
+	$gravatar = get_avatar( get_current_user_id(), 40 );
+	$gravatar = str_replace( "class='", "class='format-icon ", $gravatar );
+	echo $gravatar;
+	?>
 	<ul>
 		<li class="editor-title">
 			<input type="text" name="editor-title" id="editor-title" value="" placeholder="<?php esc_html_e( 'Enter title here', 'homeroom' ); ?>" />
@@ -16,7 +23,7 @@ if ( !is_home() || !is_user_logged_in() || !current_user_can( 'publish_posts' ) 
 		</li>
 		<li class="editor-buttons">
 			<input type="text" name="editor-tags" id="editor-tags" value="" placeholder="<?php esc_html_e( 'comma, separated, tags', 'homeroom' ); ?>" />
-			<?php homeroom_restrict_manage_posts( false, __( 'Post', 'homeroom' ) ); ?>
+			<?php homeroom_post_formats_select( false, __( 'Post', 'homeroom' ) ); ?>
 			<input type="submit" name="editor-submit-draft" id="editor-submit-draft" value="Save Draft" />
 			<input type="submit" name="editor-submit-publish" id="editor-submit-publish" value="Publish" class="button-primary" />
 		</li>
@@ -26,38 +33,29 @@ if ( !is_home() || !is_user_logged_in() || !current_user_can( 'publish_posts' ) 
 <script type="text/javascript">
 (function($){
 	var editorOpen = false;
-	$( '#open-editor' ).append( '<a>+</a>' ).css( 'cursor', 'pointer' ).on( 'click', function(){
-
-		// @todo: Rotate + to x (3 full spins, with easing)
-
+	$( '#editor' ).hide();
+	$( '#open-editor' ).append( '<a>+</a>' ).css( 'cursor', 'pointer' ).on( 'click', function(e){
+		e.preventDefault();
 		if ( editorOpen ) {
 			// Closing Editor
-			// fadeOut editor internals
-			$( '#editor *' ).fadeOut( function(){
-				// Shrink down the dimensions
-				$( '#editor' ).append( '<div id="remove-after-resize">&nbsp;</div>' ).animate( { width: '0px', height: '0px', opacity: 0 }, function(){
-					// Remove resize holder
-					$( '#remove-after-resize' ).remove();
-					editorOpen = false;
-					$( '#open-editor a' ).text( '+' );
-				});
-
+			// Shrink down the dimensions
+			$( '#editor' ).animate( { width: '0px', height: '0px', opacity: 0 }, function(){
+				$( '#editor' ).hide();
+				$( '#open-editor a' ).text( '+' );
 			});
 		} else {
 			// Opening Editor
-			// Hide Editor internals
-			$( '#editor *' ).hide();
-
 			// Expand out the width of the editor, then slide down the height and fadeIn the internals
-			$( '#editor' ).append( '<div id="remove-after-resize">&nbsp;</div>' ).css( { width: '0px', height: '0px', display: 'block', opacity: 0 } ).animate( { width: '87.5%', height: '200px', opacity: 1 }, function(){
+			$( '#editor' ).css( { width: '0px', height: '0px', display: 'block', opacity: 0 } ).animate( { width: '84%', height: '200px', opacity: 1 }, function(){
 				// Show internals once resized
-				$( '#editor *' ).fadeIn();
-				$( '#remove-after-resize' ).remove();
 				$( '#editor-title' ).focus();
 				$( '#open-editor a' ).text( '×' );
-				editorOpen = true;
 			});
 		}
+
+		editorOpen = !editorOpen;
+
+		return false;
 	});
 
 	// Tag auto-completion

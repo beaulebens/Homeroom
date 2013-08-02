@@ -1,4 +1,5 @@
 <div id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
+	<div class="hr"></div>
 	<?php
 	// Find a good URL - Keyring importers store one in postmeta to make this easier
 	if ( !$url = get_post_meta( get_the_ID(), 'href', true ) ) {
@@ -22,6 +23,7 @@
 		<h1 class="entry-title">
 			<a href="<?php echo esc_url( $url ); ?>" title="<?php echo esc_attr( the_title_attribute( 'echo=0' ) ); ?>" rel="bookmark"><?php the_title(); ?></a>
 		</h1>
+		<div class="post-format-link-url"><a href="<?php echo esc_url( $url ); ?>" title="<?php echo esc_attr( the_title_attribute( 'echo=0' ) ); ?>" rel="bookmark"><?php echo esc_html( $url ); ?></a></div>
 		<?php homeroom_tags_list(); ?>
 	</header><!-- .entry-header -->
 
@@ -30,7 +32,22 @@
 	</div><!-- .entry-content -->
 
 	<footer class="entry-meta">
-		<?php homeroom_permalink_datestamp(); ?>
+		<?php
+		$icon = $service = false;
+		if ( 'delicious' == get_post_meta( get_the_ID(), 'keyring_service', true ) ) {
+			if ( ! $deliciouser = get_user_meta( $post->post_author, 'delicious', true ) )
+				$deliciouser = '';
+			$icon = 'icon-delicious';
+			$service = '<a href="http://delicious.com/' . esc_attr( $deliciouser ) . '" rel="nofollow">Delicious</a>';
+		} else if ( 'instapaper' == get_post_meta( get_the_ID(), 'keyring_service', true ) ) {
+			$icon = 'icon-file';
+			$service = '<a href="http://instapaper.com" rel="nofollow">Instapaper</a>';
+		}
+		if ( $icon && $service ) {
+			echo '<span class="post-source ' . esc_attr( $icon ) . '">' . sprintf( esc_html( __( 'Saved on %s', 'homeroom' ) ), $service ) . '</span>';
+		}
+		?>
+		<?php homeroom_permalink_datestamp( false, 'icon-calendar permalink' ); ?>
 		<?php edit_post_link( __( 'Edit', 'homeroom' ), '<span class="edit-link">', '</span>' ); ?>
 	</footer><!-- .entry-meta -->
 

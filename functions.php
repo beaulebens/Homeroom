@@ -1,6 +1,6 @@
 <?php
 /**
- * Homeroom functions and definitions
+ * This is Homeroom.
  *
  * @package Homeroom
  * @since Homeroom 1.0
@@ -12,485 +12,544 @@
  * @since Homeroom 1.0
  */
 if ( ! isset( $content_width ) )
-	$content_width = 640; /* pixels */
+	$content_width = 607; /* pixels */
 
 /**
- * Define your GMaps API key in wp-config or something to override this one.
- * If you don't define one somewhere, all maps functionality will fail.
- * https://code.google.com/apis/console/
+ * Core Homeroom class which gets things done.
  */
-define( 'GOOGLE_MAPS_API_KEY', 'AIzaSyAeH_bDOuGPtNuji2Wt--4YSQ3MymIbpWA' );
-defined( 'GOOGLE_MAPS_API_KEY' ) or define( 'GOOGLE_MAPS_API_KEY', false );
+class Homeroom {
+	var $map_markers    = array();
+	var $multimap_start = false;
+	var $multimap_end   = false;
+	var $last_map       = false;
+	var $just_did_map   = false;
 
-/**
- * Implement the Custom Header feature
- */
-require( get_template_directory() . '/inc/custom-header.php' );
+	function __construct() {
+		// @todo remove this once there is a UI for all options
+		require get_template_directory() . '/options.php';
 
-if ( ! function_exists( 'homeroom_setup' ) ):
-/**
- * Sets up theme defaults and registers support for various WordPress features.
- *
- * Note that this function is hooked into the after_setup_theme hook, which runs
- * before the init hook. The init hook is too late for some features, such as indicating
- * support post thumbnails.
- *
- * @since Homeroom 1.0
- */
-function homeroom_setup() {
+		// Basic theme, widget, etc set up
+		$this->setup();
+		add_action( 'widgets_init',        array( $this, 'widgets_init'     ) );
+		add_filter( 'user_contactmethods', array( $this, 'contact_methods'  ) );
+		add_action( 'body_class',          array( $this, 'body_class'       ) );
+		add_filter( 'wp_title',            array( $this, 'wp_title'         ), 10, 2 );
+		add_filter( 'the_content',         array( $this, 'oembed_helper'    ), 1, 1 );
+		add_filter( 'the_content',         array( $this, 'dynamic_headings' ) );
 
-	/**
-	 * Custom template tags for this theme.
-	 */
-	require( get_template_directory() . '/inc/template-tags.php' );
+		// Load some custom user-facing JS/CSS
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 
-	/**
-	 * Custom functions that act independently of the theme templates
-	 */
-	//require( get_template_directory() . '/inc/tweaks.php' );
+		// Post manipulation/look-ahead/behind.
+		add_action( 'before_post', function() { global $homeroom; $homeroom->just_did_map = false; } );
+		add_action( 'after_post', array( $this, 'collate_checkins' ) );
 
-	/**
-	 * Custom Theme Options
-	 */
-	require( get_template_directory() . '/inc/theme-options/theme-options.php' );
+		// Query Filters
+		add_action( 'pre_get_posts', array( $this, 'filter_post_types' ) );
+		add_action( 'pre_get_posts', array( $this, 'hide_twitter_replies' ) );
+		add_filter( 'posts_where',   array( $this, 'hide_foursquare_checkins' ) );
 
-	/**
-	 * Make theme available for translation
-	 * Translations can be filed in the /languages/ directory
-	 * If you're building a theme based on Homeroom, use a find and replace
-	 * to change 'homeroom' to the name of your theme in all the template files
-	 */
-	load_theme_textdomain( 'homeroom', get_template_directory() . '/languages' );
-
-	/**
-	 * Add default posts and comments RSS feed links to head
-	 */
-	add_theme_support( 'automatic-feed-links' );
-
-	/**
-	 * Enable support for Post Thumbnails
-	 */
-	add_theme_support( 'post-thumbnails' );
-
-	/**
-	 * Enable custom background so that users can upload images/pick colors
-	 */
-	add_theme_support( 'custom-background', array(
-		'default-color' => 'eee',
-	) );
-
-	/**
-	 * This theme uses wp_nav_menu() in one location.
-	 */
-	register_nav_menus( array(
-		'main' => __( 'Main Site Menu', 'homeroom' ),
-	) );
-
-	/**
-	 * Add support for all the post formats we're using
-	 */
-	add_theme_support( 'post-formats', array( 'aside', 'status', 'link', 'image' ) );
-
-	/**
-	 * Infinite Scroll, via Jetpack
-	 * @see http://jetpack.me/support/infinite-scroll/
-	 */
-	add_theme_support( 'infinite-scroll', array(
-		'container'      => 'content',
-		'footer'         => 'colophon',
-		'type'           => 'click',
-		'footer_widgets' => true,
-		'posts_per_page' => get_option( 'posts_per_page' ),
-) );
-}
-endif; // homeroom_setup
-add_action( 'after_setup_theme', 'homeroom_setup' );
-
-/**
- * Register widgetized area and update sidebar with default widgets
- *
- * @since Homeroom 1.0
- */
-function homeroom_widgets_init() {
-	register_sidebar( array(
-		'name'          => __( 'Sidebar', 'homeroom' ),
-		'id'            => 'sidebar-1',
-		'before_widget' => '<aside id="%1$s" class="widget %2$s">',
-		'after_widget'  => "</aside>",
-		'before_title'  => '<h1 class="widget-title">',
-		'after_title'   => '</h1>',
-	) );
-
-	register_sidebar( array(
-		'name'          => __( 'Footer (Full Width)', 'homeroom' ),
-		'id'            => 'footer-wide',
-		'before_widget' => '<aside id="%1$s" class="widget %2$s">',
-		'after_widget'  => "</aside>",
-		'before_title'  => '<h1 class="widget-title">',
-		'after_title'   => '</h1>',
-	) );
-
-	register_sidebar( array(
-		'name'          => __( 'Footer (Left)', 'homeroom' ),
-		'id'            => 'footer-1',
-		'before_widget' => '<aside id="%1$s" class="widget %2$s">',
-		'after_widget'  => "</aside>",
-		'before_title'  => '<h1 class="widget-title">',
-		'after_title'   => '</h1>',
-	) );
-
-	register_sidebar( array(
-		'name'          => __( 'Footer (Center)', 'homeroom' ),
-		'id'            => 'footer-2',
-		'before_widget' => '<aside id="%1$s" class="widget %2$s">',
-		'after_widget'  => "</aside>",
-		'before_title'  => '<h1 class="widget-title">',
-		'after_title'   => '</h1>',
-	) );
-
-	register_sidebar( array(
-		'name'          => __( 'Footer (Right)', 'homeroom' ),
-		'id'            => 'footer-3',
-		'before_widget' => '<aside id="%1$s" class="widget %2$s">',
-		'after_widget'  => "</aside>",
-		'before_title'  => '<h1 class="widget-title">',
-		'after_title'   => '</h1>',
-	) );
-}
-add_action( 'widgets_init', 'homeroom_widgets_init' );
-
-/**
- * Enqueue scripts and styles
- */
-function homeroom_scripts() {
-	global $post;
-
-	wp_enqueue_style( 'style', get_stylesheet_uri() );
-	wp_enqueue_style( 'homeroom-css', dirname( get_stylesheet_uri() ) . '/homeroom.css' );
-
-	wp_enqueue_script( 'small-menu', get_template_directory_uri() . '/js/small-menu.js', array( 'jquery' ), '20120206', true );
-
-	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
-		wp_enqueue_script( 'comment-reply' );
+		if ( is_admin() )
+			require get_template_directory() . '/inc/admin.php';
 	}
 
-	// Global JS file for all additional functionality
-	wp_enqueue_script( 'keyboard-image-navigation', get_template_directory_uri() . '/js/homeroom.js', array( 'jquery' ), '20120202' );
+	function setup() {
+		/**
+		 * Custom Header
+		 */
+		require get_template_directory() . '/inc/custom-header.php';
 
-	// Embedded Tweets, for non-mobile only
-	// See https://dev.twitter.com/docs/embedded-tweets
-	if (
-		!function_exists( 'jetpack_is_mobile' )
-	||
-		!jetpack_is_mobile()
-	) {
-		wp_enqueue_script(
-			'twitter-embed',
-			'//platform.twitter.com/widgets.js',
-			false, // no deps
-			false, // version
-			true // footer
-		);
+		/**
+		 * Custom template tags for this theme.
+		 */
+		require get_template_directory() . '/inc/template-tags.php';
+
+		/**
+		 * Customizer
+		 */
+		require get_template_directory() . '/inc/customizer.php';
+
+		/**
+		 * Make theme available for translation
+		 * Translations can be filed in the /languages/ directory
+		 * If you're building a theme based on Homeroom, use a find and replace
+		 * to change 'homeroom' to the name of your theme in all the template files
+		 */
+		load_theme_textdomain( 'homeroom', get_template_directory() . '/languages' );
+
+		/**
+		 * Add default posts and comments RSS feed links to head
+		 */
+		add_theme_support( 'automatic-feed-links' );
+
+		/**
+		 * Enable support for Post Thumbnails
+		 */
+		add_theme_support( 'post-thumbnails' );
+
+		/**
+		 * Enable custom background so that users can upload images/pick colors
+		 */
+		add_theme_support( 'custom-background', array(
+			'default-color' => 'fdfdfa', /* Thanks, Readability */
+		) );
+
+		/**
+		 * This theme uses wp_nav_menu() in one location.
+		 */
+		register_nav_menus( array(
+			'main' => __( 'Main Site Menu', 'homeroom' ),
+		) );
+
+		/**
+		 * Enable support for all the post formats we're using
+		 */
+		add_theme_support( 'post-formats', array( 'aside', 'status', 'link', 'image', 'video', 'quote' ) );
+
+		/**
+		 * Infinite Scroll, via Jetpack
+		 * @see http://jetpack.me/support/infinite-scroll/
+		 */
+		add_theme_support( 'infinite-scroll', array(
+			'container'      => 'timeline',
+			'footer'         => 'colophon',
+			'type'           => 'scroll',
+			'footer'         => false,
+			'wrapper'        => false,
+			'posts_per_page' => get_option( 'posts_per_page' ),
+		) );
 	}
 
-	// Google Maps API
-	if ( false != GOOGLE_MAPS_API_KEY ) {
-		wp_enqueue_script(
-			'google-maps',
-			'//maps.googleapis.com/maps/api/js?&sensor=true&key=' . GOOGLE_MAPS_API_KEY,
-			array( 'jquery' ), // I am lazy, so I'm going to require jQuery -- don't do this :)
-			1, // version
-			true // footer
-		);
+	function widgets_init() {
+		// Sidebar, show on most screens
+		register_sidebar( array(
+			'name'          => __( 'Sidebar', 'homeroom' ),
+			'description'   => __( 'This is the main sidebar, shown on most pages.', 'homeroom' ),
+			'id'            => 'sidebar-1',
+			'before_widget' => '<aside id="%1$s" class="widget %2$s">',
+			'after_widget'  => "</aside>",
+			'before_title'  => '<h1 class="widget-title">',
+			'after_title'   => '</h1>',
+		) );
+
+		// Wide Footer, shown on single pages if defined, overrides the 3 below
+		register_sidebar( array(
+			'name'          => __( 'Footer - Full-width', 'homeroom' ),
+			'description'   => __( 'A full-width footer which spans the whole page (left to right) at the bottom of single page views. If you want 3 columns, leave this empty and use the next 3 widget areas instead.', 'homeroom' ),
+			'id'            => 'footer-wide',
+			'before_widget' => '<aside id="%1$s" class="widget %2$s">',
+			'after_widget'  => "</aside>",
+			'before_title'  => '<h1 class="widget-title">',
+			'after_title'   => '</h1>',
+		) );
+
+		// If you want 3 columns of footer widgets, then use these
+		register_sidebar( array(
+			'name'          => __( 'Footer - Left', 'homeroom' ),
+			'description'   => __( 'The left column of your footer (disabled if the full-width footer has widgets in it).', 'homeroom' ),
+			'id'            => 'footer-left',
+			'before_widget' => '<aside id="%1$s" class="widget %2$s">',
+			'after_widget'  => "</aside>",
+			'before_title'  => '<h1 class="widget-title">',
+			'after_title'   => '</h1>',
+		) );
+		register_sidebar( array(
+			'name'          => __( 'Footer - Center', 'homeroom' ),
+			'description'   => __( 'The center column of your footer (disabled if the full-width footer has widgets in it).', 'homeroom' ),
+			'id'            => 'footer-center',
+			'before_widget' => '<aside id="%1$s" class="widget %2$s">',
+			'after_widget'  => "</aside>",
+			'before_title'  => '<h1 class="widget-title">',
+			'after_title'   => '</h1>',
+		) );
+		register_sidebar( array(
+			'name'          => __( 'Footer - Right', 'homeroom' ),
+			'description'   => __( 'The right column of your footer (disabled if the full-width footer has widgets in it).', 'homeroom' ),
+			'id'            => 'footer-right',
+			'before_widget' => '<aside id="%1$s" class="widget %2$s">',
+			'after_widget'  => "</aside>",
+			'before_title'  => '<h1 class="widget-title">',
+			'after_title'   => '</h1>',
+		) );
 	}
-}
-add_action( 'wp_enqueue_scripts', 'homeroom_scripts' );
 
-/**
- * Add a class to the body to make the menu non-fixed by default.
- * We can dynamically change this via JS to 'fixed-menu' if we
- * want the menu to fix to the top of the viewport.
- */
-add_action( 'body_class', function( $classes ){
-	$classes[] = 'default-menu';
-	return $classes;
-});
+	function enqueue_scripts() {
+		global $post;
 
-/**
- * We register a few extra contact methods just because it makes sense in a social context,
- * but also because we can use them for fallbacks in building URLs etc.
- */
-function homeroom_contact_methods() {
-	$methods['twitter']    = 'Twitter'; // Intentionally not translating these because they're product names
-	$methods['foursquare'] = 'Foursquare';
-	$methods['instagram']  = 'Instagram';
-	$methods['flickr']     = 'Flickr';
-	$methods['delicious']  = 'Delicious';
+		wp_enqueue_style( 'style', get_stylesheet_uri() );
+		wp_enqueue_style( 'homeroom-css', dirname( get_stylesheet_uri() ) . '/homeroom.css' );
 
-	// Alphabetize them. We're not animals.
-	ksort( $methods );
-	return $methods;
-}
-add_filter( 'user_contactmethods', 'homeroom_contact_methods' );
+		wp_enqueue_script( 'small-menu', get_template_directory_uri() . '/js/small-menu.js', array( 'jquery' ), '20120206', true );
 
-/**
- * We are going to remove all Foursquare checkins from normal display,
- * then we'll add them back in with a custom query that just loads them
- * for each 24 hour period. Allow them in for search results.
- */
-function homeroom_hide_status_posts( &$wp_query ) {
-	if ( is_admin() || is_search() )
-		return;
-
-	$post_format_tax_query = array(
-		'taxonomy' => 'post_format',
-		'field'    => 'slug',
-		'terms'    => 'post-format-status', // Foursquare saved as status
-		'operator' => 'NOT IN'
-	);
-	$tax_query = $wp_query->get( 'tax_query' );
-	if ( is_array( $tax_query ) ) {
-		$tax_query = $tax_query + $post_format_tax_query;
-	} else {
-		$tax_query = array( $post_format_tax_query );
-	}
-	$wp_query->set( 'tax_query', $tax_query );
-}
-add_action( 'pre_get_posts', 'homeroom_hide_status_posts' );
-
-/**
- * This just flags that the last thing we did was not actually a map. Since this is
- * on before_post, that means we're about to output a post, so by the time after_post
- * fires, then we actually just output a post.
- */
-function homeroom_before_post() {
-	global $homeroom_just_did_map;
-	$homeroom_just_did_map = false;
-}
-add_action( 'before_post', 'homeroom_before_post' );
-
-/**
- * Thanks to some custom hooks in this theme, we have somewhere useful to check
- * and see if we're crossing over a time-threshold that should trigger a query
- * to get a map of today's movements.
- */
-function homeroom_collate_checkins() {
-	global $homeroom_just_did_map, $homeroom_last_map, $homeroom_multimap_start, $homeroom_multimap_end;
-
-	// Foursquare check-ins just aren't that useful, so we're only going to show them on
-	// a single map, at MOST once per 24 hours.
-
-	// First, get the datestamp from the post that was just rendered
-	$previous = get_the_date( 'Y-m-d H:i:s', '', '', false );
-	if ( !$homeroom_multimap_start )
-		$homeroom_multimap_start = $previous;
-
-	// Then check for the next post
-	$next = homeroom_next_post();
-	if ( !$next ) {
-		// If we hit the end of the page, output another map unless the last thing we did was a map
-		if ( !$homeroom_just_did_map ) {
-			if ( !$homeroom_multimap_end )
-				$homeroom_multimap_end = $previous;
-			if ( $GLOBALS['homeroom_map_markers'] = homeroom_get_daily_checkins() ) {
-				echo '<article class="shadow f-status">';
-				get_template_part( 'multimap' );
-				echo '</article>';
-			}
-			$homeroom_multimap_start = $homeroom_multimap_end = false;
+		if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
+			wp_enqueue_script( 'comment-reply' );
 		}
-		return;
-	}
-	homeroom_prev_post();
 
-	$next     = $next->post_date; // Already in Y-m-d H:i:s
-	$next     = explode( ' ', $next );
-	$previous = explode( ' ', $previous );
+		// Global JS file for all additional functionality
+		wp_enqueue_script( 'homeroom-js', get_template_directory_uri() . '/js/homeroom.js', array( 'jquery' ), '20130101' );
 
-	// Same day still? Bail.
-	if ( $previous[0] == $next[0] )
-		return;
+		// Add tag suggest script for the homepage/editor
+		if ( Homeroom::get_option( 'enable_frontend_postbox' ) && is_home() && is_user_logged_in() && current_user_can( 'publish_posts' ) && !get_query_var( 'paged' ) )
+			wp_enqueue_script( 'suggest', false, array(), false, true );
 
-	if ( substr( $homeroom_last_map, 0, strpos( $homeroom_last_map, ' ' ) ) == $previous[0] )
-		return;
 
-	// todo: add in logic to get us to 5am/handle gaps etc
-	$homeroom_multimap_end = $next[0] . ' ' . $next[1];
-	if ( $GLOBALS['homeroom_map_markers'] = homeroom_get_daily_checkins() ) {
-		echo '<article class="shadow f-status">';
-		get_template_part( 'multimap' );
-		echo '</article>';
-	}
-	$homeroom_multimap_start = $homeroom_multimap_end = false;
-}
-add_action( 'after_post', 'homeroom_collate_checkins' );
+		// Embedded Tweets, for non-mobile only, being careful to use the same name as the Jetpack Twitter widget
+		// See https://dev.twitter.com/docs/embedded-tweets
+		if (
+			! function_exists( 'jetpack_is_mobile' )
+		||
+			! jetpack_is_mobile()
+		&&
+			Homeroom::get_option( 'enable_twitter_embeds' )
+		) {
+			wp_enqueue_script(
+				'twitter-widgets',
+				'//platform.twitter.com/widgets.js',
+				false, // no deps
+				false, // version
+				true // footer
+			);
+		}
 
-/**
- * Grab a day's worth of checkins from the DB.
- * @uses homeroom_multimap_posts_between()
- * @return Array containing located Posts (checkins), false if none.
- */
-function homeroom_get_daily_checkins() {
-	// Temporarily remove the filter that prevents check-ins from showing normally
-	remove_filter( 'pre_get_posts', 'homeroom_hide_status_posts' );
-
-	// And instead filter things by a specific date range
-	add_filter( 'posts_where', 'homeroom_multimap_posts_between' );
-	$markers = get_posts( array(
-		'suppress_filters' => false, // we need our filters
-		'numberposts'      => -1, // all of the things
-		'meta_query' => array(
-			array(
-				'key'     => 'keyring_service',
-				'value'   => 'foursquare',
-				'compare' => '=',
-			),
-			array(
-				'key'     => 'geo_public',
-				'value'   => '1',
-				'compare' => '=',
-			),
-		),
-		'tax_query'        => array( array(
-			'taxonomy' => 'post_format',
-			'field'    => 'slug',
-			'terms'    => array( 'post-format-status' ), // Check-ins are marked as a 'status'
-			'operator' => 'IN',
-		) ),
-	) );
-
-	// Flip filters back to how they should be now that we have what we want
-	remove_filter( 'posts_where', 'homeroom_multimap_posts_between' );
-	add_filter( 'pre_get_posts', 'homeroom_hide_status_posts' );
-
-	return $markers;
-}
-
-/**
- * Restrict WP_Query to a date range, based on the $homeroom_multimap_* globals.
- * Used in multimap.php
- */
-function homeroom_multimap_posts_between( $where = '' ) {
-	global $wpdb, $homeroom_multimap_start, $homeroom_multimap_end;
-	// The dates are actually "reversed" because blogs go back in time
-	// @todo exclude based on option
-	// @todo optionally don't do this at all
-	$where .= $wpdb->prepare( " AND ( `post_date` BETWEEN %s AND %s ) AND `post_date` < %s - INTERVAL 2 HOUR", $homeroom_multimap_end, $homeroom_multimap_start, current_time( 'mysql' ) );
-	$homeroom_multimap_start = $homeroom_multimap_end;
-	return $where;
-}
-
-/**
- * We use Post Formats a lot, let's add that as a filter on the All Posts page
- */
-function homeroom_restrict_manage_posts( $checks = true, $all_label = false ) {
-	if ( $checks ) {
-		if ( !current_theme_supports( 'post-formats' ) )
-			return;
-
-		if ( 'post' !== get_current_screen()->post_type )
-			return;
+		// Google Maps API
+		if (
+			!is_home()
+		||
+			( is_home() && !Homeroom::get_option( 'no_maps_on_homepage' ) )
+		) {
+			wp_enqueue_script(
+				'google-maps',
+				'//maps.googleapis.com/maps/api/js?&sensor=true&key=' . Homeroom::get_option( 'google_maps_api_key' ),
+				array( 'jquery' ), // this doesn't technically require jQuery, but the way I use it does, because I'm lazy
+				1, // version
+				true // footer
+			);
+		}
 	}
 
-	$all_label = !$all_label ? __( 'All Formats', 'homeroom' ) : $all_label;
+	function wp_title( $title, $sep ) {
+		global $page, $paged;
 
-	$post_formats = get_theme_support( 'post-formats' );
-	if ( is_array( $post_formats[0] ) ) :
-	?><select name="format" id="format">
-	<option value="0"><?php _e( $all_label, 'homeroom' ); ?></option>
-	<?php foreach ( $post_formats[0] as $format ): ?>
-	<option<?php selected( isset( $_REQUEST['format'] ) && $_REQUEST['format'] == $format ); ?> value="<?php echo esc_attr( $format ); ?>"><?php echo esc_html( get_post_format_string( $format ) ); ?></option>
-	<?php endforeach; ?>
-	</select><?php
-	endif;
-}
-add_action( 'restrict_manage_posts', 'homeroom_restrict_manage_posts' );
+		if ( is_feed() )
+			return $title;
 
-function homeroom_manage_posts_formats( &$wp_query ) {
-	if ( !is_admin() )
-		return;
+		// Add the blog name
+		$title .= get_bloginfo( 'name' );
 
-	if ( function_exists( 'get_current_screen' ) && $screen = get_current_screen() ) {
-		if ( is_object( $screen ) && 'post' !== $screen->post_type )
-			return;
-	}
+		// Add the blog description for the home/front page.
+		$site_description = get_bloginfo( 'description', 'display' );
+		if ( $site_description && ( is_home() || is_front_page() ) )
+			$title .= " $sep $site_description";
 
-	if ( empty( $_REQUEST['format'] ) )
-		return;
+		// Add a page number if necessary:
+		if ( $paged >= 2 || $page >= 2 )
+			$title .= " $sep " . sprintf( __( 'Page %s', '_s' ), max( $paged, $page ) );
 
-	$post_format_tax_query = array(
-		'taxonomy' => 'post_format',
-		'field'    => 'slug',
-		'terms'    => 'post-format-' . esc_attr( $_REQUEST['format'] ),
-		'operator' => 'IN'
-	);
-	$tax_query = $wp_query->get( 'tax_query' );
-	if ( is_array( $tax_query ) ) {
-		$tax_query = $tax_query + $post_format_tax_query;
-	} else {
-		$tax_query = array( $post_format_tax_query );
-	}
-	$wp_query->set( 'tax_query', $tax_query );
-}
-add_action( 'pre_get_posts', 'homeroom_manage_posts_formats' );
-
-/**
- * We add some extra settings to Settings > Discussion, because Homeroom introduces some new
- * functionality in that area.
- */
-function homeroom_discussion_settings() {
- 	register_setting( 'discussion', 'highlight_commenter_emails', 'highlight_commenter_emails_validate' );
- 	add_settings_field( 'highlight_commenter_emails', __( 'Highlight user comments', 'homeroom' ), 'homeroom_comment_emails', 'discussion', 'default' );
-}
-add_action( 'admin_init', 'homeroom_discussion_settings' );
-
-function homeroom_comment_emails() {
-	?><input name="highlight_commenter_emails" type="text" id="highlight_commenter_emails" value="<?php echo esc_attr( get_option( 'highlight_commenter_emails' ) ); ?>" class="regular-text" />
-	<p class="description"><?php echo esc_html( __( 'Enter a list of email addresses, separated by spaces, to highlight any comments made from those users.', 'homeroom' ) ); ?></p><?php
-}
-
-function highlight_commenter_emails_validate( $val ) {
-	$val = explode( ' ', $val );
-	$out = array();
-	foreach ( (array) $val as $email ) {
-		if ( is_email( $email ) )
-			$out[] = strtolower( $email );
-	}
-	return implode( ' ', $out );
-}
-
-
-// @todo make conditional on if the editor is being loaded
-function homeroom_editor_auto_complete_tags_script() {
-	wp_enqueue_script( 'suggest' );
-}
-add_action( 'wp_enqueue_scripts', 'homeroom_editor_auto_complete_tags_script' );
-
-function homeroom_wp_title( $title, $sep ) {
-	global $page, $paged;
-
-	if ( is_feed() )
 		return $title;
+	}
 
-	// Add the blog name
-	$title .= get_bloginfo( 'name' );
+	function body_class( $classes ) {
+		$classes[] = 'default-menu';
 
-	// Add the blog description for the home/front page.
-	$site_description = get_bloginfo( 'description', 'display' );
-	if ( $site_description && ( is_home() || is_front_page() ) )
-		$title .= " $sep $site_description";
+		if ( is_search() && 'masonry' == Homeroom::get_option( 'search_results_view' ) ) {
+			$classes[] = 'masonry';
+		}
 
-	// Add a page number if necessary:
-	if ( $paged >= 2 || $page >= 2 )
-		$title .= " $sep " . sprintf( __( 'Page %s', '_s' ), max( $paged, $page ) );
+		return $classes;
+	}
 
-	return $title;
+	/*
+	 * Mark up your posts as if for the single page (H1 = post title, top heading in content is H2)
+	 * This code will automatically "downgrade" your headings on other pages, assuming H1 is your site,
+	 * H2 is the post title, H3 is the first content heading.
+	 */
+	function dynamic_headings( $content ) {
+		 if ( is_singular() )
+			 return $content;
+
+		 $content = str_replace( array( '<h5', '</h5>' ), array( '<h6', '</h6>' ), $content );
+		 $content = str_replace( array( '<h4', '</h4>' ), array( '<h5', '</h5>' ), $content );
+		 $content = str_replace( array( '<h3', '</h3>' ), array( '<h4', '</h4>' ), $content );
+		 $content = str_replace( array( '<h2', '</h2>' ), array( '<h3', '</h3>' ), $content );
+
+		 return $content;
+	}
+
+	function oembed_helper( $content ) {
+		if ( !class_exists( 'WP_oEmbed' ) )
+			require_once ABSPATH . WPINC . '/class-oembed.php';
+
+		$oembed = _wp_oembed_get_object(); // I know, it's private, but it provides a Singleton
+		foreach ( $oembed->providers as $matchmask => $data ) {
+			list( $providerurl, $regex ) = $data;
+
+			// Turn the asterisk-type provider URLs into regex
+			if ( !$regex ) {
+				$matchmask = '#' . str_replace( '___wildcard___', '(.+)', preg_quote( str_replace( '*', '___wildcard___', $matchmask ), '#' ) ) . '#i';
+				$matchmask = preg_replace( '|^#http\\\://|', '#https?\://', $matchmask );
+			}
+
+			// Monkey-patch the regular expression to not match stuff that's quoted or next to tags
+			$boundary = substr( $matchmask, 0, 1 );
+			$matchmask = $boundary . '[^"\'>]' . str_replace( $boundary, '[^"\'>]' . $boundary, substr( $matchmask, 1 ) );
+			if ( preg_match_all( $matchmask, $content, $matches ) ) {
+				$url = $matches[0][0];
+				if ( $loc = strpos( $url, '"' ) )
+					$url = substr( $url, 0, $loc );
+				$content .= "\n\n" . $url;
+			}
+		}
+
+		return $content;
+	}
+
+	function contact_methods( $methods ) {
+		$methods['twitter']    = __( 'Twitter Username',    'homeroom' );
+		$methods['foursquare'] = __( 'Foursquare Username', 'homeroom' );
+		$methods['instagram']  = __( 'Instagram Username',  'homeroom' );
+		$methods['flickr']     = __( 'Flickr Username',     'homeroom' );
+		$methods['delicious']  = __( 'Delicious Username',  'homeroom' );
+		$methods['tripit']     = __( 'TripIt Username',     'homeroom' );
+
+		// Alphabetize them. We're not animals.
+		ksort( $methods );
+		return $methods;
+	}
+
+	function get_possible_post_types() {
+		// Determine the list of possible filters (all importers + "posts")
+		$known_types = array( 'posts' );
+		global $_keyring_importers;
+		if ( !empty( $_keyring_importers ) ) {
+			foreach ( $_keyring_importers as $service => $importer ) {
+				if ( !empty( $importer->service ) && $importer->service->get_token() ) {
+					$known_types[] = $service;
+				}
+			}
+		}
+		return $known_types;
+	}
+
+	function filter_post_types( &$wp_query ) {
+
+
+return; // @todo make this work.
+
+
+		if ( is_admin() )
+			return;
+
+		$filters = array( 'posts' ); // Default to posts only
+
+		$known_types = $this->get_possible_post_types();
+
+		if ( !empty( $_COOKIE['homeroom_posts_filter'] ) ) {
+			$cookie = explode( ',', $_COOKIE['homeroom_posts_filter'] );
+			foreach ( $cookie as $type ) {
+				 if ( in_array( $type, $known_types ) ) {
+				 	$filters[] = $type;
+				 }
+			}
+		}
+// @todo remove this and add checkboxes to the UI
+		$filters = Homeroom::get_option( 'posts_filter' );
+
+		$filter_conditions = array();
+		foreach ( (array) $filters as $condition ) {
+			if ( 'posts' == $condition ) {
+				$filter_conditions[] = array(
+					'key'     => 'keyring_service',
+					'compare' => 'NOT EXISTS', // Normal posts don't have a keyring_service
+				);
+			} else {
+				$filter_conditions[] = array(
+					'key'     => 'keyring_service',
+					'value'   => $condition,
+					'compare' => '!=',
+				);
+			}
+		}
+
+		$meta_query = $wp_query->get( 'meta_query' );
+		if ( is_array( $meta_query ) ) {
+			foreach ( $filter_conditions as $condition )
+				$meta_query = array_merge( $meta_query, $condition );
+		} else {
+			$meta_query = array( $filter_conditions );
+		}
+
+		$wp_query->set( 'meta_query', $meta_query );
+	}
+
+	function hide_twitter_replies( &$wp_query ) {
+		if ( is_admin() )
+			return;
+
+		if ( ! Homeroom::get_option( 'hide_twitter_replies') )
+			return;
+
+		$twitter_reply_meta_query = array(
+			'key'     => 'twitter_in_reply_to_user_id',
+			'compare' => 'NOT EXISTS',
+		);
+		$meta_query = $wp_query->get( 'meta_query' );
+		if ( is_array( $meta_query ) ) {
+			$meta_query[] = $twitter_reply_meta_query;
+		} else {
+			$meta_query = array( $twitter_reply_meta_query );
+		}
+		$wp_query->set( 'meta_query', $meta_query );
+	}
+
+	function hide_foursquare_checkins( $where = '' ) {
+		if (
+			! Homeroom::get_option( 'hide_checkins_on_home' )
+		||
+			is_admin()
+		||
+			is_singular()
+		||
+			is_tag()
+		||
+			is_category()
+		)
+			return $where;
+
+		global $wpdb;
+		$where .= " AND $wpdb->posts.ID NOT IN ( SELECT post_id FROM $wpdb->postmeta WHERE meta_key = 'keyring_service' AND meta_value = 'foursquare' )";
+		return $where;
+	}
+
+	function collate_checkins() {
+		// Don't want random maps appearing amongst our archives
+		if ( !is_front_page() && !is_post_type_archive( 'status' ) )
+			return;
+
+		// Foursquare check-ins just aren't that useful, so we're only going to show them on
+		// a single map, at MOST once per 24 hours.
+
+		// First, get the datestamp from the post that was just rendered
+		$previous = get_the_date( 'Y-m-d H:i:s', '', '', false );
+		if ( !$this->multimap_start )
+			$this->multimap_start = $previous;
+
+		// Then check for the next post
+		$next = homeroom_next_post();
+		if ( !$next ) {
+			// If we hit the end of the page, output another map unless the last thing we did was a map
+			if ( !$this->just_did_map ) {
+				if ( !$this->multimap_end )
+					$this->multimap_end = $previous;
+				$this->render_multipoint_map();
+				$this->multimap_start = $this->multimap_end = false;
+			}
+			return;
+		}
+		homeroom_prev_post();
+
+		$next     = $next->post_date; // Already in Y-m-d H:i:s
+		$next     = explode( ' ', $next );
+		$previous = explode( ' ', $previous );
+
+		// Same day still? Bail.
+		if ( $previous[0] == $next[0] )
+			return;
+
+		if ( substr( $this->last_map, 0, strpos( $this->last_map, ' ' ) ) == $previous[0] )
+			return;
+
+		// todo: add in logic to get us to 5am/handle gaps etc
+		$this->multimap_end = $next[0] . ' ' . $next[1];
+		$this->render_multipoint_map();
+		$this->multimap_start = $this->multimap_end = false;
+	}
+
+	function get_daily_checkins() {
+		// Temporarily remove the filter that prevents check-ins from showing normally
+		remove_filter( 'posts_where', array( $this, 'hide_foursquare_checkins' ) );
+
+		// And instead filter things by a specific date range
+		add_filter( 'posts_where', array( $this, 'multimap_posts_between' ) );
+		$markers = get_posts( array(
+			'suppress_filters' => false, // we need our filters
+			'numberposts'      => -1, // all of the things
+			'meta_query' => array(
+				array(
+					'key'     => 'keyring_service',
+					'value'   => 'foursquare',
+					'compare' => '=',
+				),
+				array(
+					'key'     => 'geo_public',
+					'value'   => '1',
+					'compare' => '=',
+				),
+			),
+			'tax_query' => array( array(
+				'taxonomy' => 'post_format',
+				'field'    => 'slug',
+				'terms'    => array( 'post-format-status' ), // Check-ins are marked as a 'status'
+				'operator' => 'IN',
+			) ),
+		) );
+		remove_filter( 'posts_where', array( $this, 'multimap_posts_between' ) );
+
+		// Flip filters back to how they should be now that we have what we want
+		add_filter( 'posts_where', array( $this, 'hide_foursquare_checkins' ) );
+
+		return $markers;
+	}
+
+	function render_multipoint_map() {
+		if ( is_home() && Homeroom::get_option( 'no_maps_on_homepage' ) )
+			return;
+
+		if ( $this->map_markers = $this->get_daily_checkins() ) {
+			echo '<article class="f-status">';
+				get_template_part( 'once', 'status' );
+				get_template_part( 'map', 'multipoint' );
+			echo '</article>';
+		}
+	}
+
+	function multimap_posts_between( $where = '' ) {
+		global $wpdb;
+		// The dates are actually "reversed" because blogs go back in time
+		$where .= $wpdb->prepare(
+			" AND ( `post_date` BETWEEN %s AND %s ) AND `post_date` < %s - INTERVAL %d HOUR",
+			$this->multimap_end,
+			$this->multimap_start,
+			current_time( 'mysql' ),
+			Homeroom::get_option( 'hide_checkins_for_hours' )
+		);
+		$this->multimap_start = $this->multimap_end;
+		return $where;
+	}
+
+	public static function get_option( $name, $default = false ) {
+		// @todo Temporarily hardcoded, see options.php
+		// $options = get_option( 'homeroom_options' );
+		$options = homeroom_options();
+		if ( is_array( $options ) && isset( $options[$name] ) ) {
+			return $options[$name];
+		}
+
+		return $default;
+	}
+
+	public static function update_option( $name, $value ) {
+		// @todo Temporarily hardcoded, see options.php
+		// $options = get_option( 'homeroom_options' );
+		$options = homeroom_options();
+		if ( ! is_array( $options ) ) {
+			$options = array();
+		}
+
+		$options[$name] = $value;
+
+		return update_option( 'homeroom_options', $options );
+	}
 }
-add_filter( 'wp_title', 'homeroom_wp_title', 10, 2 );
 
-function homeroom_masonry_class( $class ) {
-	if ( is_search() || is_archive() )
-		$class[] = 'masonry';
-	return $class;
-}
-add_filter( 'body_class', 'homeroom_masonry_class' );
+// Welcome to Homeroom
+$homeroom = new Homeroom;

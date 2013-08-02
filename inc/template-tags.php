@@ -22,7 +22,7 @@ function homeroom_content_nav( $nav_id ) {
 		$nav_class = 'site-navigation post-navigation';
 
 	?>
-	<nav role="navigation" id="<?php echo $nav_id; ?>" class="<?php echo $nav_class; ?>">
+	<nav role="navigation" id="<?php echo esc_attr( $nav_id ); ?>" class="<?php echo $nav_class; ?>">
 		<h1 class="assistive-text"><?php _e( 'Post navigation', 'homeroom' ); ?></h1>
 
 	<?php if ( is_single() ) : // navigation links for single posts ?>
@@ -42,7 +42,7 @@ function homeroom_content_nav( $nav_id ) {
 
 	<?php endif; ?>
 
-	</nav><!-- #<?php echo $nav_id; ?> -->
+	</nav><!-- #<?php echo esc_html( $nav_id ); ?> -->
 	<?php
 }
 endif; // homeroom_content_nav
@@ -70,7 +70,7 @@ function homeroom_comment( $comment, $args, $depth ) {
 
 		default :
 			// Big Gravatars for top-level, smaller for replies
-			$avatar_size = $depth > 1 ? 50 : 70;
+			$avatar_size = $depth == 1 ? 60 : 40;
 
 			// Check if this comment was made by a highlighted user, and add class if so
 			$commenter_class = '';
@@ -87,34 +87,39 @@ function homeroom_comment( $comment, $args, $depth ) {
 	?>
 	<li <?php comment_class( $commenter_class ); ?> id="li-comment-<?php comment_ID(); ?>">
 		<article id="comment-<?php comment_ID(); ?>" class="comment">
-			<div class="comment-author-avatar shadow"><?php echo get_avatar( $comment, $avatar_size ); ?></div>
+			<div class="comment-author-avatar"><?php echo get_avatar( $comment, $avatar_size ); ?></div>
 
-			<div class="comment-wrap shadow">
-				<footer>
+			<div class="comment-wrap">
+				<header>
+					<div class="reply">
+						<?php comment_reply_link( array_merge( $args, array( 'depth' => $depth, 'max_depth' => $args['max_depth'] ) ) ); ?>
+					</div><!-- .reply -->
+
 					<div class="comment-author vcard">
-						<?php printf( __( '%s <span class="says">says:</span>', 'homeroom' ), sprintf( '<cite class="fn">%s</cite>', get_comment_author_link() ) ); ?>
+						<?php printf( __( '%s <span class="says">said:</span>', 'homeroom' ), sprintf( '<cite class="fn">%s</cite>', get_comment_author_link() ) ); ?>
 					</div><!-- .comment-author .vcard -->
 					<?php if ( $comment->comment_approved == '0' ) : ?>
 						<em><?php _e( 'Your comment is awaiting moderation.', 'homeroom' ); ?></em>
 						<br />
 					<?php endif; ?>
+				</header>
 
+				<div class="comment-content">
+					<?php comment_text(); ?>
+				</div>
+
+				<footer>
 					<div class="comment-meta commentmetadata">
-						<a href="<?php echo esc_url( get_comment_link( $comment->comment_ID ) ); ?>"><time pubdate datetime="<?php comment_time( 'c' ); ?>">
+						<a href="<?php echo esc_url( get_comment_link( $comment->comment_ID ) ); ?>" class="icon-calendar"><time datetime="<?php comment_time( 'c' ); ?>">
 						<?php
-							/* translators: 1: date, 2: time */
-							printf( __( '%1$s at %2$s', 'homeroom' ), get_comment_date(), get_comment_time() ); ?>
+							/* translators: 1: time, 2: date */
+							printf( __( '%1$s, %2$s', 'homeroom' ), get_comment_time(), get_comment_date() ); ?>
 						</time></a>
-						<?php edit_comment_link( __( '(Edit)', 'homeroom' ), ' ' );
+						<?php edit_comment_link( __( 'Edit', 'homeroom' ), ' ' );
 						?>
 					</div><!-- .comment-meta .commentmetadata -->
 				</footer>
 
-				<div class="comment-content"><?php comment_text(); ?></div>
-
-				<div class="reply">
-					<?php comment_reply_link( array_merge( $args, array( 'depth' => $depth, 'max_depth' => $args['max_depth'] ) ) ); ?>
-				</div><!-- .reply -->
 			</div>
 		</article><!-- #comment-## -->
 	<?php
@@ -130,14 +135,14 @@ if ( ! function_exists( 'homeroom_posted_on' ) ) :
  * @since Homeroom 1.0
  */
 function homeroom_posted_on() {
-	printf( __( 'Posted on <a href="%1$s" title="%2$s" rel="bookmark"><time class="entry-date" datetime="%3$s" pubdate>%4$s</time></a><span class="byline"> by <span class="author vcard"><a class="url fn n" href="%5$s" title="%6$s" rel="author">%7$s</a></span></span>', 'homeroom' ),
+	printf( __( 'Posted on <a href="%1$s" title="%2$s" rel="bookmark"><time class="entry-date" datetime="%3$s">%4$s</time></a><span class="byline"> by <span class="author vcard"><a class="url fn n" href="%5$s" title="%6$s" rel="author">%7$s</a></span></span>', 'homeroom' ),
 		esc_url( get_permalink() ),
 		esc_attr( get_the_time() ),
 		esc_attr( get_the_date( 'c' ) ),
 		esc_html( get_the_date() ),
 		esc_url( get_author_posts_url( get_the_author_meta( 'ID' ) ) ),
 		esc_attr( sprintf( __( 'View all posts by %s', 'homeroom' ), get_the_author() ) ),
-		esc_html( get_the_author() )
+		get_the_author()
 	);
 }
 endif;
@@ -240,7 +245,7 @@ function homeroom_permalink_datestamp( $url = false, $class = false, $date = fal
  * is marked as not being public, then it will bail unless you set $force = true.
  * Assumes that the Google Maps JS code was already enqueued.
  * No InfoWindow/clickables/anything fancy, just a marker.
- * Based heavily on multimap.php
+ * Based heavily on map-multipoint.php
  * @param  geo $lat Latitude of the marker to add to the map
  * @param  geo $long Longitude of the marker to add to the map
  * @param  boolean $long Force render the map, even if the geo data for the current post is marked as non-public? Ignored if you pass in lat/long
@@ -258,12 +263,12 @@ function homeroom_render_map( $lat = false, $long = false, $force = false ) {
 		$id = mt_rand( 0, 1000 );
 	}
 	$map_id = 'm' . md5( microtime() . ":$lat:$long" );
-	?><div id="gmap_<?php echo esc_js( $map_id ); ?>" class="google-map single-point"></div>
+	?><div id="gmap_<?php echo esc_js( $map_id ); ?>" class="map single-point"></div>
 	<script type="text/javascript">
 	jQuery(document).ready(function(){
 		var gmap_<?php echo esc_js( $map_id ); ?> = {
 			positions : {
-				<?php echo esc_js( $id ); ?> : new google.maps.LatLng( '<?php echo $lat; ?>', '<?php echo $long; ?>' ),
+				<?php echo esc_js( $id ); ?> : new google.maps.LatLng( '<?php echo $lat; ?>', '<?php echo $long; ?>' )
 			},
 			bounds : new google.maps.LatLngBounds(), // empty for now, we'll dynamically extend it later
 			map : new google.maps.Map(
@@ -271,7 +276,7 @@ function homeroom_render_map( $lat = false, $long = false, $force = false ) {
 				{
 					mapTypeId: google.maps.MapTypeId.ROADMAP,
 					center: new google.maps.LatLng( 0, 0 ),
-					zoom: 15 // Seems to be a good zoom for a single point
+					zoom: 16 // Seems to be a good zoom for a single point
 				}
 			),
 			markers : {},
@@ -298,12 +303,23 @@ function homeroom_render_map( $lat = false, $long = false, $force = false ) {
 }
 
 function homeroom_tags_list() {
-	$tags_list = get_the_tag_list( '<span class="hash">#</span>', __( ' <span class="hash">#</span>', 'homeroom' ) );
+	$tags_list = get_the_tag_list( '<li class="tag"><span class="hash">#</span>', '</li> <li class="tag"><span class="hash">#</span>', '</li>' );
 	if ( $tags_list ) : ?>
-		<div class="tag-links">
+		<ul class="tags">
 			<?php echo $tags_list; ?>
-		</div>
+		</ul>
 	<?php
 	endif;
 }
 
+function homeroom_get_service_link( $service ) {
+	switch ( strtolower( $service ) ) {
+	case 'twitter':
+	case 'delicious':
+	case 'instapaper':
+	case 'flickr':
+	case 'foursquare':
+	case 'instagram':
+	case 'tripit':
+	}
+}
