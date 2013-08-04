@@ -16,10 +16,10 @@ function homeroom_post_formats_select( $checks = true, $all_label = false ) {
 
 	$post_formats = get_theme_support( 'post-formats' );
 	if ( is_array( $post_formats[0] ) ) :
-	?><select name="format" id="format">
+	?><select name="post_format" id="post_format">
 	<option value="0"><?php _e( $all_label, 'homeroom' ); ?></option>
 	<?php foreach ( $post_formats[0] as $format ): ?>
-	<option<?php selected( isset( $_REQUEST['format'] ) && $_REQUEST['format'] == $format ); ?> value="<?php echo esc_attr( $format ); ?>"><?php echo esc_html( get_post_format_string( $format ) ); ?></option>
+	<option<?php selected( isset( $_REQUEST['post_format'] ) && $_REQUEST['post_format'] == $format ); ?> value="<?php echo esc_attr( $format ); ?>"><?php echo esc_html( get_post_format_string( $format ) ); ?></option>
 	<?php endforeach; ?>
 	</select><?php
 	endif;
@@ -36,13 +36,13 @@ function homeroom_manage_posts_formats( &$wp_query ) {
 			return;
 	}
 
-	if ( empty( $_REQUEST['format'] ) )
+	if ( empty( $_REQUEST['post_format'] ) )
 		return;
 
 	$post_format_tax_query = array(
 		'taxonomy' => 'post_format',
 		'field'    => 'slug',
-		'terms'    => 'post-format-' . esc_attr( $_REQUEST['format'] ),
+		'terms'    => 'post-format-' . esc_attr( $_REQUEST['post_format'] ),
 		'operator' => 'IN'
 	);
 	$tax_query = $wp_query->get( 'tax_query' );
