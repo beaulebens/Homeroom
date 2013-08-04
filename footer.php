@@ -52,8 +52,8 @@
 			echo apply_filters(
 				'homeroom_attribution',
 				sprintf(
-					__( 'Powered by the %s for %s.' ),
-					'<a href="http://dentedreality.com.au/projects/wp-theme-homeroom/">Homeroom theme</a>',
+					__( 'Powered by %s for %s.' ),
+					'<a href="http://dentedreality.com.au/projects/wp-theme-homeroom/">Homeroom</a>',
 					'<a href="http://wordpress.org/">WordPress</a>'
 				)
 			);
