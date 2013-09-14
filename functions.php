@@ -312,12 +312,17 @@ class Homeroom {
 
 		global $post;
 		$add = '';
-		$children = get_posts( array( 'post_parent' => $post->ID, 'post_type' => 'page', 'post_status' => 'publish' ) );
+		$children = get_posts( array(
+			'post_parent' => $post->ID,
+			'post_type'   => 'page',
+			'numberposts' => -1,
+			'orderby'     => 'menu_order',
+			'order'       => 'ASC',
+		) );
 		if ( $children ) {
 			$add .= '<div class="sub-pages-container"><h2>' . esc_html( 'Sub-Pages', 'homeroom' ) . '</h2><ol>';
 			foreach ( $children as $child ) {
-				setup_postdata( $child );
-				$add .= '<li><a href="' . get_permalink() . '">' . get_the_title() . '</a></li>';
+				$add .= '<li><a href="' . get_permalink( $child->ID ) . '">' . get_the_title( $child->ID ) . '</a></li>';
 			}
 			$add .= '</ol></div>';
 		}
