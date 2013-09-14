@@ -1,8 +1,5 @@
 <?php
 
-/**
- * We use Post Formats a lot, let's add that as a filter on the All Posts page
- */
 function homeroom_post_formats_select( $checks = true, $all_label = false ) {
 	if ( $checks ) {
 		if ( !current_theme_supports( 'post-formats' ) )
@@ -24,7 +21,27 @@ function homeroom_post_formats_select( $checks = true, $all_label = false ) {
 	</select><?php
 	endif;
 }
-add_action( 'restrict_manage_posts', 'homeroom_post_formats_select' );
+
+function homeroom_services_taxonomy_select( $checks = true, $all_label = false ) {
+	if ( $checks ) {
+		if ( 'post' !== get_current_screen()->post_type )
+			return;
+	}
+
+	$all_label = !$all_label ? __( 'All Services', 'homeroom' ) : $all_label;
+
+	$terms = get_terms( 'keyring_services' );
+
+	if ( count( $terms ) ) :
+	?><select name="keyring_services" id="keyring_services">
+	<option value="0"><?php _e( $all_label, 'homeroom' ); ?></option>
+	<?php foreach ( $terms as $term ): ?>
+	<option<?php selected( isset( $_REQUEST['keyring_services'] ) && $_REQUEST['keyring_services'] == $term->slug ); ?> value="<?php echo esc_attr( $term->slug ); ?>"><?php echo esc_html( $term->name ); ?></option>
+	<?php endforeach; ?>
+	</select><?php
+	endif;
+}
+add_action( 'restrict_manage_posts', 'homeroom_services_taxonomy_select' );
 
 // Handler to implement format filters (see above)
 function homeroom_manage_posts_formats( &$wp_query ) {

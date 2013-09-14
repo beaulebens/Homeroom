@@ -1,3 +1,10 @@
+<?php
+if ( post_password_required() ) {
+	echo get_the_password_form();
+	return;
+}
+?>
+
 <div id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
 	<div class="hr"></div>
 	<?php if ( $twitter_id = get_post_meta( get_the_ID(), 'twitter_id', true ) ) : ?>
@@ -18,7 +25,7 @@
 		<footer class="entry-meta">
 			<?php homeroom_tags_list(); ?>
 			<span class="post-source icon-twitter"><?php echo sprintf( esc_html( __( 'Posted on %s', 'homeroom' ) ), '<a href="' . esc_url( $permalink ) . '" rel="nofollow">Twitter</a>' ); ?></span>
-			<?php homeroom_permalink_datestamp( false, 'icon-calendar permalink' ); ?>
+			<?php homeroom_permalink_datestamp( false, 'icon-link permalink' ); ?>
 			<?php edit_post_link( __( 'Edit', 'homeroom' ), '<span class="edit-link">', '</span>' ); ?>
 			<?php get_template_part( 'map', 'singlepoint' ); ?>
 		</footer><!-- .entry-meta -->
@@ -30,9 +37,8 @@
 
 		<footer class="entry-meta">
 			<?php homeroom_tags_list(); ?>
-			<?php homeroom_permalink_datestamp( false, 'icon-calendar permalink' ); ?>
+			<?php homeroom_permalink_datestamp( false, 'icon-link permalink' ); ?>
 			<?php edit_post_link( __( 'Edit', 'homeroom' ), '<span class="edit-link">', '</span>' ); ?>
 		</footer><!-- .entry-meta -->
 	<?php endif; ?>
-
 </div>

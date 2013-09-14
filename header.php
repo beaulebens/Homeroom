@@ -41,6 +41,7 @@
 	<nav role="navigation" class="site-navigation main-navigation default">
 		<h1 class="assistive-text"><?php _e( 'Menu', 'homeroom' ); ?></h1>
 		<div class="assistive-text skip-link"><a href="#content" title="<?php esc_attr_e( 'Skip to content', 'homeroom' ); ?>"><?php _e( 'Skip to content', 'homeroom' ); ?></a></div>
+		<?php get_template_part( 'searchform' ); ?>
 		<?php wp_nav_menu( array( 'theme_location' => 'main' ) ); ?>
 	</nav><!-- .site-navigation .main-navigation -->
 </header><!-- #masthead .site-header -->

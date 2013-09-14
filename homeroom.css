@@ -329,10 +329,6 @@ nav.main-navigation {
     clear: both;
 }
 
-#content {
-    padding: 0 2em;
-}
-
 #timeline {
     border-left: solid 6px #ddd;
     position: relative;
@@ -359,7 +355,7 @@ article {
 }
 
 #secondary-content {
-    margin: 0 0 0 2em;
+    padding-right: 2em;
 }
 
 
@@ -374,7 +370,8 @@ h6 {
     font-weight: bold;
     letter-spacing: 0.04em;
     color: #222;
-    line-height: 1.2;
+    line-height: 1.2em;
+    margin-bottom: 0.2em;
 }
 
 h1 {
@@ -529,6 +526,11 @@ ol {
     padding-bottom: 1em;
 }
 
+h1.entry-title {
+    position: relative;
+    top: -6px;
+}
+
 .page-title .hash {
     color: #bbb;
 }
@@ -554,7 +556,6 @@ ol {
     list-style-type: none;
     margin: 0;
     padding: 0;
-    float: left;
     text-align: left;
 }
 
@@ -579,6 +580,7 @@ ol {
 
 .entry-content {
     clear: left;
+    margin-top: 0.7em;
 }
 
 .entry-content p {
@@ -609,7 +611,6 @@ ol {
 }
 
 p .more-link {
-    float: right;
     margin-bottom: 1em;
 }
 
@@ -754,10 +755,6 @@ p .more-link {
     border-radius: 0.3em;
 }
 
-.status-private {
-
-}
-
 .featured-image {
     float: right;
     margin-left: 1em;
@@ -772,6 +769,14 @@ p .more-link {
 
 .related-posts-container {
     margin: -2em 0 3em 73px;
+}
+
+.post-password-form {
+    margin-left: 73px;
+    background: #ddd;
+    border: solid 1px #ccc;
+    padding: 1.3em 1.5em 0.1em 1.5em;
+    border-radius: 3px;
 }
 
 button,
@@ -871,6 +876,10 @@ input[type="submit"] {
 
 .comment .reply {
     float: right;
+}
+
+.form-allowed-tags {
+    font-size: 80%;
 }
 
 #respond input[type=text] {
@@ -1127,6 +1136,10 @@ article.f-status {
     padding: 4px 5px;
 }
 
+.single-format-image .map-singlepoint:before {
+    left: 75px;
+}
+
 .map {
     width: 100%;
     height: 20em;
@@ -1160,6 +1173,10 @@ article.f-status {
     height: auto;
 }
 
+.marker-info blockquote {
+    font-style: italic;
+}
+
 .f-status p {
     margin: 0.2em 0;
 }
@@ -1180,7 +1197,7 @@ article.f-status {
     height: auto;
 }
 
-.format-image a {
+.format-image .image-grouping a {
     border: 0;
 }
 
@@ -1201,6 +1218,10 @@ article.f-status {
     position: absolute;
     width: 100%;
     bottom: -500px;
+}
+
+.single-format-image .image-overlay {
+    bottom: 0px;
 }
 
 .single-format-image .image-overlay {
@@ -1243,6 +1264,7 @@ article.f-status {
 
 .format-link .entry-content {
     margin-top: 0;
+    margin-bottom: 0.5em;
 }
 
 .format-link .entry-content blockquote p,
@@ -1251,6 +1273,12 @@ article.f-status {
 }
 
 .format-link h1 {
+    font-size: 130%;
+    line-height: 1.3em;
+    position: static;
+}
+
+.single-format-link h3 {
     font-size: 110%;
 }
 
@@ -1269,7 +1297,12 @@ article.f-status {
 }
 
 /* ------------------------------------------------------------------------ */
-/* Search Results */
+/* Search & Results */
+#masthead #searchform {
+    margin: 10px 10px 10px 0;
+    float: right;
+}
+
 .masonry {
     width: 100%;
 }
@@ -1280,6 +1313,7 @@ article.f-status {
 
 .masonry #content {
     margin: 0;
+    padding: 0;
 }
 
 .masonry .f-:before,
@@ -1314,9 +1348,9 @@ article.f-status {
 .masonry #content article {
     float: left;
     clear: none;
-    width: 31%;
+    width: 300px;
     padding: 0;
-    margin: 0 0 20px 0;
+    margin: 0 0 15px 0;
     box-shadow: 1px 1px 3px #eee;
     background: #fff;
 }
@@ -1340,7 +1374,7 @@ article.f-status {
 }
 
 .masonry .page-title {
-    margin: 1em 0 1em -10px;
+    margin: 1em 0;
 }
 
 .masonry #searchform {

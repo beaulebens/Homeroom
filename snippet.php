@@ -1,8 +1,16 @@
+<?php
+if ( post_password_required() ) {
+	echo get_the_password_form();
+	return;
+}
+?>
+
 <div id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
 	<header class="entry-header">
 		<h1 class="entry-title">
 			<a href="<?php the_permalink(); ?>" title="<?php echo esc_attr( sprintf( __( 'Permalink to %s', 'homeroom' ), the_title_attribute( 'echo=0' ) ) ); ?>" rel="bookmark"><?php the_title(); ?></a>
 		</h1>
+		<?php homeroom_tags_list(); ?>
 	</header><!-- .entry-header -->
 
 	<div class="entry-content">
@@ -29,8 +37,7 @@
 	</div><!-- .entry-content -->
 
 	<footer class="entry-meta">
-		<?php homeroom_tags_list(); ?>
-		<?php homeroom_permalink_datestamp( false, 'icon-calendar permalink' ); ?>
+		<?php homeroom_permalink_datestamp( false, 'icon-link permalink' ); ?>
 		<?php edit_post_link( __( 'Edit', 'homeroom' ), '<span class="edit-link">', '</span>' ); ?>
 	</footer><!-- .entry-meta -->
 

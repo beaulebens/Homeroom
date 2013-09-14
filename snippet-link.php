@@ -1,3 +1,10 @@
+<?php
+if ( post_password_required() ) {
+	echo get_the_password_form();
+	return;
+}
+?>
+
 <div id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
 	<div class="hr"></div>
 	<?php
@@ -34,12 +41,15 @@
 	<footer class="entry-meta">
 		<?php
 		$icon = $service = false;
-		if ( 'delicious' == get_post_meta( get_the_ID(), 'keyring_service', true ) ) {
+		$keyring_service = wp_get_object_terms( get_the_ID(), 'keyring_services' );
+		if ( $keyring_service )
+			$keyring_service = $keyring_service[0]->name;
+		if ( 'Delicious' == $keyring_service ) {
 			if ( ! $deliciouser = get_user_meta( $post->post_author, 'delicious', true ) )
 				$deliciouser = '';
 			$icon = 'icon-delicious';
 			$service = '<a href="http://delicious.com/' . esc_attr( $deliciouser ) . '" rel="nofollow">Delicious</a>';
-		} else if ( 'instapaper' == get_post_meta( get_the_ID(), 'keyring_service', true ) ) {
+		} else if ( 'Instapaper' == $keyring_service ) {
 			$icon = 'icon-file';
 			$service = '<a href="http://instapaper.com" rel="nofollow">Instapaper</a>';
 		}
@@ -47,7 +57,7 @@
 			echo '<span class="post-source ' . esc_attr( $icon ) . '">' . sprintf( esc_html( __( 'Saved on %s', 'homeroom' ) ), $service ) . '</span>';
 		}
 		?>
-		<?php homeroom_permalink_datestamp( false, 'icon-calendar permalink' ); ?>
+		<?php homeroom_permalink_datestamp( false, 'icon-link permalink' ); ?>
 		<?php edit_post_link( __( 'Edit', 'homeroom' ), '<span class="edit-link">', '</span>' ); ?>
 	</footer><!-- .entry-meta -->
 

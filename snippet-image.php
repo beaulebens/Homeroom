@@ -1,3 +1,10 @@
+<?php
+if ( post_password_required() ) {
+	echo get_the_password_form();
+	return;
+}
+?>
+
 <div id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
 
 	<div class="entry-content">
@@ -6,7 +13,9 @@
 
 			// @todo check for password protection
 
-			$keyring_service = get_post_meta( get_the_ID(), 'keyring_service', true );
+			$keyring_service = wp_get_object_terms( get_the_ID(), 'keyring_services' );
+			if ( $keyring_service )
+				$keyring_service = $keyring_service[0]->name;
 
 			// Get the content and extract the first img tag src
 			$content = apply_filters( 'the_content', get_the_content() );
@@ -21,13 +30,13 @@
 			if (
 				trim( strip_tags( $remaining_content ) )
 			||
-				'instagram' != $keyring_service
+				'Instagram' != $keyring_service
 			) : ?>
 				<div class="image-overlay">
 					<header class="entry-header">
 						<div class="image-overlay-content">
 							<?php
-							if ( 'instagram' != $keyring_service )
+							if ( 'Instagram' != $keyring_service )
 								echo '<h1 class="entry-title"><a href="' . esc_url( get_permalink() ) . '">' . get_the_title() . '</a></h1>';
 							if ( trim( strip_tags( $remaining_content ) ) )
 								echo force_balance_tags( $remaining_content );
@@ -42,12 +51,12 @@
 			<?php homeroom_tags_list(); ?>
 			<?php
 			$icon = $service = false;
-			if ( 'instagram' == get_post_meta( get_the_ID(), 'keyring_service', true ) ) {
+			if ( 'Instagram' == $keyring_service ) {
 				$icon = 'icon-instagram';
 				$url = get_post_meta( get_the_ID(), 'instagram_url', true );
 				$url = $url ? $url : 'http://instagram.com';
 				$service = '<a href="' . esc_url( $url ) . '" rel="nofollow">Instagram</a>';
-			} else if ( 'flickr' == get_post_meta( get_the_ID(), 'keyring_service', true ) ) {
+			} else if ( 'Flickr' == $keyring_service ) {
 				$icon = 'icon-flickr';
 				$url = get_post_meta( get_the_ID(), 'flickr_url', true );
 				$url = $url ? $url : 'http://flickr.com';
@@ -57,7 +66,7 @@
 				echo '<span class="post-source ' . esc_attr( $icon ) . '">' . sprintf( esc_html( __( 'Posted on %s', 'homeroom' ) ), $service ) . '</span>';
 			}
 			?>
-			<?php homeroom_permalink_datestamp( false, 'icon-calendar permalink' ); ?>
+			<?php homeroom_permalink_datestamp( false, 'icon-link permalink' ); ?>
 			<?php edit_post_link( __( 'Edit', 'homeroom' ), '<span class="edit-link">', '</span>' ); ?>
 			<?php get_template_part( 'map', 'singlepoint' ); ?>
 		</footer><!-- .entry-meta -->

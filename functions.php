@@ -45,9 +45,8 @@ class Homeroom {
 		add_action( 'after_post', array( $this, 'collate_checkins' ) );
 
 		// Query Filters
-		add_action( 'pre_get_posts', array( $this, 'filter_post_types' ) );
 		add_action( 'pre_get_posts', array( $this, 'hide_twitter_replies' ) );
-		add_filter( 'posts_where',   array( $this, 'hide_foursquare_checkins' ) );
+		add_action( 'pre_get_posts', array( $this, 'hide_foursquare_checkins' ) );
 
 		if ( is_admin() )
 			require get_template_directory() . '/inc/admin.php';
@@ -330,58 +329,7 @@ class Homeroom {
 		return $known_types;
 	}
 
-	function filter_post_types( &$wp_query ) {
-
-
-return; // @todo make this work.
-
-
-		if ( is_admin() )
-			return;
-
-		$filters = array( 'posts' ); // Default to posts only
-
-		$known_types = $this->get_possible_post_types();
-
-		if ( !empty( $_COOKIE['homeroom_posts_filter'] ) ) {
-			$cookie = explode( ',', $_COOKIE['homeroom_posts_filter'] );
-			foreach ( $cookie as $type ) {
-				 if ( in_array( $type, $known_types ) ) {
-				 	$filters[] = $type;
-				 }
-			}
-		}
-// @todo remove this and add checkboxes to the UI
-		$filters = Homeroom::get_option( 'posts_filter' );
-
-		$filter_conditions = array();
-		foreach ( (array) $filters as $condition ) {
-			if ( 'posts' == $condition ) {
-				$filter_conditions[] = array(
-					'key'     => 'keyring_service',
-					'compare' => 'NOT EXISTS', // Normal posts don't have a keyring_service
-				);
-			} else {
-				$filter_conditions[] = array(
-					'key'     => 'keyring_service',
-					'value'   => $condition,
-					'compare' => '!=',
-				);
-			}
-		}
-
-		$meta_query = $wp_query->get( 'meta_query' );
-		if ( is_array( $meta_query ) ) {
-			foreach ( $filter_conditions as $condition )
-				$meta_query = array_merge( $meta_query, $condition );
-		} else {
-			$meta_query = array( $filter_conditions );
-		}
-
-		$wp_query->set( 'meta_query', $meta_query );
-	}
-
-	function hide_twitter_replies( &$wp_query ) {
+	function hide_twitter_replies( $query ) {
 		if ( is_admin() )
 			return;
 
@@ -392,16 +340,30 @@ return; // @todo make this work.
 			'key'     => 'twitter_in_reply_to_user_id',
 			'compare' => 'NOT EXISTS',
 		);
-		$meta_query = $wp_query->get( 'meta_query' );
-		if ( is_array( $meta_query ) ) {
+		$meta_query = $query->get( 'meta_query' );
+		if ( is_array( $query ) ) {
 			$meta_query[] = $twitter_reply_meta_query;
 		} else {
 			$meta_query = array( $twitter_reply_meta_query );
 		}
-		$wp_query->set( 'meta_query', $meta_query );
+		$query->set( 'meta_query', $meta_query );
 	}
 
-	function hide_foursquare_checkins( $where = '' ) {
+	function hide_twitter_replies_adjacent( $where ) {
+		if ( is_admin() )
+			return;
+
+		if ( ! Homeroom::get_option( 'hide_twitter_replies') )
+			return;
+
+		// @todo
+		// filter join to include postmeta?
+		// where no twitter_in_reply_to_user_id
+
+		return $where;
+	}
+
+	function hide_foursquare_checkins( $query ) {
 		if (
 			! Homeroom::get_option( 'hide_checkins_on_home' )
 		||
@@ -413,11 +375,21 @@ return; // @todo make this work.
 		||
 			is_category()
 		)
-			return $where;
+			return;
 
-		global $wpdb;
-		$where .= " AND $wpdb->posts.ID NOT IN ( SELECT post_id FROM $wpdb->postmeta WHERE meta_key = 'keyring_service' AND meta_value = 'foursquare' )";
-		return $where;
+		$obj = get_queried_object();
+		if ( taxonomy_exists( 'keyring_services' ) && $obj && 'Foursquare' == $obj->name )
+			return;
+
+		$foursquare_tax_query = array(
+			'taxonomy' => 'keyring_services',
+			'terms'    => array( 'Foursquare' ),
+			'operator' => 'NOT IN',
+			'field'    => 'name',
+		);
+
+		$query->tax_query->queries[]    = $foursquare_tax_query;
+   		$query->query_vars['tax_query'] = $query->tax_query->queries;
 	}
 
 	function collate_checkins() {
@@ -466,36 +438,32 @@ return; // @todo make this work.
 
 	function get_daily_checkins() {
 		// Temporarily remove the filter that prevents check-ins from showing normally
-		remove_filter( 'posts_where', array( $this, 'hide_foursquare_checkins' ) );
+		remove_filter( 'pre_get_posts', array( $this, 'hide_foursquare_checkins' ) );
 
 		// And instead filter things by a specific date range
 		add_filter( 'posts_where', array( $this, 'multimap_posts_between' ) );
 		$markers = get_posts( array(
 			'suppress_filters' => false, // we need our filters
-			'numberposts'      => -1, // all of the things
+			'numberposts'      => 50, // put a limit to avoid killing maps
 			'meta_query' => array(
-				array(
-					'key'     => 'keyring_service',
-					'value'   => 'foursquare',
-					'compare' => '=',
-				),
 				array(
 					'key'     => 'geo_public',
 					'value'   => '1',
 					'compare' => '=',
 				),
 			),
-			'tax_query' => array( array(
-				'taxonomy' => 'post_format',
-				'field'    => 'slug',
-				'terms'    => array( 'post-format-status' ), // Check-ins are marked as a 'status'
-				'operator' => 'IN',
-			) ),
+			'tax_query' => array(
+				array(
+					'taxonomy' => 'keyring_services',
+					'terms'    => array( 'Foursquare' ),
+					'field'    => 'name',
+				)
+			),
 		) );
 		remove_filter( 'posts_where', array( $this, 'multimap_posts_between' ) );
 
 		// Flip filters back to how they should be now that we have what we want
-		add_filter( 'posts_where', array( $this, 'hide_foursquare_checkins' ) );
+		add_filter( 'pre_get_posts', array( $this, 'hide_foursquare_checkins' ) );
 
 		return $markers;
 	}

@@ -10,16 +10,17 @@ jQuery( document ).ready( function( $ ) {
 	});
 
 	// Attach hover handler for image overlays
-	// @todo fix horrible flash when you hover over the overlay
+	// @todo fix annoying double-bounce
 	if ( !$( 'body.single' ).length ) {
-		$( '#content' ).on( 'hover', 'div.format-image .entry-content .image-grouping', function() {
-			// $( this ).find( '.image-overlay' ).slideToggle( 'fast' );
-			$( this ).find( '.image-overlay' ).animate( {
-				bottom: '-500px'
-			} );
-		}, function() {
+		$( '#content' ).on( 'mouseover', 'div.format-image .entry-content .image-grouping', function( e ) {
 			$( this ).find( '.image-overlay' ).animate( {
 				bottom: '0px'
+			} );
+		} );
+
+		$( '#content' ).on( 'mouseout', 'div.format-image .entry-content .image-grouping', function( e ) {
+			$( this ).find( '.image-overlay' ).animate( {
+				bottom: '-' + $( this ).height() + 'px' /* same as .image-overlay in homeroom.css */
 			} );
 		} );
 	}
@@ -64,33 +65,15 @@ jQuery( document ).ready( function( $ ) {
 		setTimeout( function() {
 			container.imagesLoaded( function() {
 				container.masonry( {
-					itemSelector : 'article',
-					isFitWidth: true,
-					columnWidth : function( containerWidth ) {
-						return containerWidth / 3;
-					}
+					itemSelector: 'article',
+					gutterWidth: 15
 				} );
 			} );
-		}, 100 );
-		for ( i = 1; i < 40; i++ ) {
-			setTimeout( function() { container.masonry( 'reload' ); }, i * 500 );
-		}
 
-		// Re-arrange on Infinite Scroll
-		$( document ).on( 'post-load', function() {
-			var infinite_container = $( '.infinite-wrap' );
 			for ( i = 1; i < 40; i++ ) {
-				setTimeout( function() {
-					infinite_container.masonry( {
-						itemSelector : 'article',
-						isFitWidth: true,
-						columnWidth : function( containerWidth ) {
-							return containerWidth / 3;
-						}
-					} );
-				}, i * 500 );
+				setTimeout( function() { container.masonry( 'reload' ); }, i * 500 );
 			}
-		} );
+		}, 100 );
 	}
 
 	// Render Tweets that are loaded via Infinite Scroll
