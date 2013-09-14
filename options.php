@@ -63,12 +63,5 @@ function homeroom_options() {
 		 * Current options: 'masonry', 'timeline' (default)
 		 */
 		'search_results_view' => 'masonry',
-
-		/**
-		 * Which types of posts should be shown on the homepage? This is an array
-		 * of service names that should match Keyring Social Importer names. You can (probably should)
-		 * also include 'posts' to show manually posted content.
-		 */
-		'posts_filter' => array( 'posts', 'instapaper' ),
 	);
 }

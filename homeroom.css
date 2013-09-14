@@ -1299,7 +1299,7 @@ article.f-status {
 /* ------------------------------------------------------------------------ */
 /* Search & Results */
 #masthead #searchform {
-    margin: 10px 10px 10px 0;
+    margin: 9px;
     float: right;
 }
 
