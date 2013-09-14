@@ -36,6 +36,7 @@ class Homeroom {
 		add_filter( 'wp_title',            array( $this, 'wp_title'         ), 10, 2 );
 		add_filter( 'the_content',         array( $this, 'oembed_helper'    ), 1, 1 );
 		add_filter( 'the_content',         array( $this, 'dynamic_headings' ) );
+		add_filter( 'the_content',         array( $this, 'child_pages'      ) );
 
 		// Load some custom user-facing JS/CSS
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -300,6 +301,28 @@ class Homeroom {
 		}
 
 		return $content;
+	}
+
+	/**
+	 * If this is a Page, then look for and list sub-pages at the end of the content
+	 */
+	function child_pages( $content ) {
+		if ( !is_singular( 'page' ) )
+			return $content;
+
+		global $post;
+		$add = '';
+		$children = get_posts( array( 'post_parent' => $post->ID, 'post_type' => 'page' ) );
+		if ( $children ) {
+			$add .= '<div class="sub-pages-container"><h2>' . esc_html( 'Sub-Pages', 'homeroom' ) . '</h2><ol>';
+			foreach ( $children as $child ) {
+				setup_postdata( $child );
+				$add .= '<li><a href="' . get_permalink() . '">' . get_the_title() . '</a></li>';
+			}
+			$add .= '</ol></div>';
+		}
+
+		return $content . $add;
 	}
 
 	function contact_methods( $methods ) {
