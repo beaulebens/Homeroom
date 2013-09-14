@@ -312,7 +312,7 @@ class Homeroom {
 
 		global $post;
 		$add = '';
-		$children = get_posts( array( 'post_parent' => $post->ID, 'post_type' => 'page' ) );
+		$children = get_posts( array( 'post_parent' => $post->ID, 'post_type' => 'page', 'post_status' => 'publish' ) );
 		if ( $children ) {
 			$add .= '<div class="sub-pages-container"><h2>' . esc_html( 'Sub-Pages', 'homeroom' ) . '</h2><ol>';
 			foreach ( $children as $child ) {
