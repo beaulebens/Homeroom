@@ -761,6 +761,7 @@ p .more-link {
 
 .single .featured-image {
     text-align: center;
+    float: none;
 }
 
 .entry-content .wp-caption-text {
