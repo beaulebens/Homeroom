@@ -584,7 +584,6 @@ h1.entry-title {
 }
 
 .entry-content p {
-    position: relative;
     text-align: justify;
     text-justify: inter-word;
 }
@@ -758,6 +757,10 @@ p .more-link {
 .featured-image {
     float: right;
     margin-left: 1em;
+}
+
+.single .featured-image {
+    text-align: center;
 }
 
 .entry-content .wp-caption-text {

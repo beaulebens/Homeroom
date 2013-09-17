@@ -19,14 +19,16 @@ if ( post_password_required() ) {
 			// On the homepage, show the featured image as a small square, off to the right
 			if ( has_post_thumbnail() ) {
 				echo '<a href="' . get_permalink() . '" class="featured-image">';
-				the_post_thumbnail( 'thumbnail' );
+				the_post_thumbnail( 'small' );
 				echo '</a>';
 			}
 			the_excerpt( __( 'Read full post <span class="meta-nav">&rarr;</span>', 'homeroom' ) );
 		} else {
 			// On a single page, show the full featured image
 			if ( has_post_thumbnail() ) {
+				echo '<div class="featured-image">';
 				the_post_thumbnail( 'post-thumbnail' );
+				echo '</div>';
 			}
 			the_content();
 		}
