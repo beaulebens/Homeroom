@@ -37,6 +37,7 @@ class Homeroom {
 		add_filter( 'the_content',         array( $this, 'oembed_helper'    ), 1, 1 );
 		add_filter( 'the_content',         array( $this, 'dynamic_headings' ) );
 		add_filter( 'the_content',         array( $this, 'child_pages'      ) );
+		add_filter( 'the_content',         array( $this, 'post_flair_shortlink' ) );
 
 		// Load some custom user-facing JS/CSS
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -328,6 +329,16 @@ class Homeroom {
 		}
 
 		return $content . $add;
+	}
+
+	function post_flair_shortlink( $content ) {
+		if ( !Homeroom::get_option( 'display_shortlink_in_flair' ) )
+			return $content;
+
+		$content .= "<div class='sharedaddy sd-block'><h3 class='sd-title'>" . esc_html__( 'Shortlink:', 'homeroom' ) . '</h3>';
+		$content .= '<input type="text" readonly="readonly" value="' . esc_attr( wp_get_shortlink() ) . '" />';
+		$content .= '</div>';
+		return $content;
 	}
 
 	function contact_methods( $methods ) {

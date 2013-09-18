@@ -63,5 +63,12 @@ function homeroom_options() {
 		 * Current options: 'masonry', 'timeline' (default)
 		 */
 		'search_results_view' => 'masonry',
+
+		/**
+		 * We can optionally add a section to the 'Post Flair' that Jetpack adds
+		 * to the bottom of a post that will include an easily copy-pasteable URL
+		 * for sharing the current post.
+		 */
+		'display_shortlink_in_flair' => true,
 	);
 }
