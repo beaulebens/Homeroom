@@ -335,6 +335,9 @@ class Homeroom {
 		if ( !Homeroom::get_option( 'display_shortlink_in_flair' ) )
 			return $content;
 
+		if ( !is_single() )
+			return $content;
+
 		$content .= "<div class='sharedaddy'><div class='sd-block'><h3 class='sd-title'>" . esc_html__( 'Shortlink:', 'homeroom' ) . '</h3>';
 		$content .= '<div class="sd-content"><input type="text" readonly="readonly" value="' . esc_attr( wp_get_shortlink() ) . '" style="margin-bottom:5px;" /></div>';
 		$content .= '</div></div>';
