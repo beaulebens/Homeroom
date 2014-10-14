@@ -34,7 +34,6 @@ class Homeroom {
 		add_filter( 'user_contactmethods', array( $this, 'contact_methods'  ) );
 		add_action( 'body_class',          array( $this, 'body_class'       ) );
 		add_filter( 'wp_title',            array( $this, 'wp_title'         ), 10, 2 );
-		add_filter( 'the_content',         array( $this, 'oembed_helper'    ), 1, 1 );
 		add_filter( 'the_content',         array( $this, 'dynamic_headings' ) );
 		add_filter( 'the_content',         array( $this, 'child_pages'      ) );
 		add_filter( 'the_content',         array( $this, 'post_flair_shortlink' ) );
