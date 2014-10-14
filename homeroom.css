@@ -589,7 +589,6 @@ h1.entry-title {
 }
 
 .entry-content p {
-    text-align: justify;
     text-justify: inter-word;
 }
 
@@ -761,7 +760,10 @@ p .more-link {
 
 .featured-image {
     float: right;
-    margin-left: 1em;
+}
+
+a.featured-image {
+  border: none;
 }
 
 .single .featured-image {
@@ -1560,5 +1562,13 @@ article.f-status {
 
     .map {
         height: 10em;
+    }
+
+    #comments {
+      margin-left: 0;
+    }
+
+    div.sharedaddy .sd-title {
+      white-space: nowrap;
     }
 }
