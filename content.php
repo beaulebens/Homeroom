@@ -22,6 +22,8 @@
 		is_home()
 	&&
 		'image' != $this_post_format
+	&&
+		'' != $this_post_format
 	) {
 		$temp_post = $post;
 		$first = true;

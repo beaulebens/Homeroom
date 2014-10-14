@@ -526,6 +526,11 @@ ol {
     padding-bottom: 1em;
 }
 
+.post img {
+    max-width: 100%;
+    height: auto;
+}
+
 h1.entry-title {
     position: relative;
     top: -6px;
@@ -1384,6 +1389,11 @@ article.f-status {
 .masonry #searchform {
     display: inline;
 }
+
+.masonry .post-password-form {
+    margin-left: 0;
+}
+
 
 /* ------------------------------------------------------------------------ */
 /* Jetpack Custom CSS */

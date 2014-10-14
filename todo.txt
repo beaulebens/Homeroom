@@ -1,1 +1,102 @@
-/Users/beaulebens/Dropbox/PlainText/Homeroom TODO.txt
+= Homeroom TODO!
+Comments
+	Threading/Replies layout
+	Click Reply UX
+	Non-comment types
+		Pingback
+Attachment Template!
+"Duplicate" post removal/suppression
+	Flickr + Twitter -> show Flickr
+	Foursquare + Twitter -> show Foursquare
+	Instagram + Twitter -> show Instagram
+	Matching
+		Resolve URL to final destination
+		Compare to imported content
+		Mark post to "skip"
+Editor
+	Actual processing/saving of posts (AJAX)
+	Basic tools
+		Bold
+		OL/UL lists
+		Blockquote
+		Code
+		Link
+		Drag-drop image upload/insert
+		Media button for media UI
+	Editor CSS (wp-admin)
+	Grab location via browser/HTML5 for geo
+	Drag-drop image upload (drop-target on entire front-end editor, create draft, auto-insert img tag)
+	Styling on submit buttons
+	Rotate + -> x -> + animation
+Responsiveness
+	iPad + iPhone
+	Portrait + Landscape
+	Header resizing
+	Post blocks
+Explore page
+	404
+Theme Options
+	Show Twitter @replies?
+	Show Twitter Retweets?
+	Collapse consecutive tweets and links on the same day?
+	Group check-ins by day and show a single map?
+	Only show check-ins (0,1,2,6,12,24) hours after publication
+	Display maps on all posts with geo-data?
+	Customizer integration
+		Header image
+		Background
+		Color scheme
+			Heading color
+			Text color
+			Timeline color picker
+			Links color
+			"Highlights" color (menus, icon backgrounds etc)
+	Sidebar should go away (a la Page) if no widgets are in it
+Jetpack integration
+	Carousel
+	Gravatar Hovercards
+	Latex formatting not janky
+	mshots screenshot of Link Post Formats?
+	Jetpack Test Content
+
+
+Random Plugin Ideas
+	Merge Posts Plugin
+		Select a bunch of posts
+		Bulk Edit -> Merge Posts
+		Options
+			Combine all Tags
+			Combine all Categories
+			Content concatenated with newest at top/bottom
+			Re-attach media to merged post
+			Delete all old posts
+			Publish merged post
+	Download Media Plugin
+		Find links in tweets etc
+		Download media and attach to the post
+		Replace links to the local copy
+	oEmbed Plus
+		Detect oEmbed-compatible URLs within posts
+			Which are NOT already on their own line
+		Append them (in order) to the end of the post to trigger oEmbed
+		Enable oEmbed in comments (steal Evan's code)
+	ListML Plugin
+		Add <!--listml--> to a post to kick in the rendering engine for lists
+	Auto-linker
+		#hashtags
+		@usernames
+		Link to Twitter or internal (author names, tags, search)
+		Don't trigger inside HTML attributes
+			http://peter.local/dev/wp-trunk/2012/09/11/advanced-javascript-session-for-automattic-ians-with-the-unstoppable-koop/
+	Conversation Importers
+		Services
+			Flickr
+			Twitter
+			Instagram
+			Foursquare
+		Data
+			Comments
+			Likes
+		Timeline
+			Decay function, backing off over time.
+			When data is retrieved, reset the decay function
