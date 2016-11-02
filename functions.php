@@ -382,7 +382,7 @@ class Homeroom {
 			'compare' => 'NOT EXISTS',
 		);
 		$meta_query = $query->get( 'meta_query' );
-		if ( is_array( $query ) ) {
+		if ( is_array( $meta_query ) ) {
 			$meta_query[] = $twitter_reply_meta_query;
 		} else {
 			$meta_query = array( $twitter_reply_meta_query );
@@ -415,6 +415,8 @@ class Homeroom {
 			is_tag()
 		||
 			is_category()
+		||
+			is_search()
 		)
 			return;
 
