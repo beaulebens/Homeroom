@@ -1307,6 +1307,26 @@ article.f-status {
     z-index: -1;
 }
 
+/* Instapaper local content cache styles */
+.remote-content.instapaper {
+  text-align: left;
+}
+
+.remote-content.instapaper figure {
+  text-align: center;
+  margin-bottom: 1em;
+}
+
+.remote-content.instapaper figcaption {
+  font-style: italic;
+}
+
+.remote-content.instapaper aside {
+  font-size: 150%;
+  font-weight: bold;
+  font-style: italic;
+}
+
 /* ------------------------------------------------------------------------ */
 /* Search & Results */
 #masthead #searchform {
