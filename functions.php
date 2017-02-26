@@ -377,6 +377,9 @@ class Homeroom {
 		if ( ! Homeroom::get_option( 'hide_twitter_replies') )
 			return;
 
+		if ( is_tax( 'people' ) )
+                        return;
+
 		$twitter_reply_meta_query = array(
 			'key'     => 'twitter_in_reply_to_user_id',
 			'compare' => 'NOT EXISTS',
@@ -417,6 +420,8 @@ class Homeroom {
 			is_category()
 		||
 			is_search()
+		||
+			is_tax( 'people' )
 		)
 			return;
 
