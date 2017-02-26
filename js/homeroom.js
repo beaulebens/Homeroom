@@ -27,12 +27,21 @@ jQuery( document ).ready( function( $ ) {
 
 	// Handle .collapse blocks (consecutive tweets/links)
 	$( document ).on( 'post-load', function() {
+		// Auto-collapse tweets etc
 		$( '.collapse' ).each( function( index, elem ) {
 			if ( $( this ).siblings( '.collapse-msg' ).length )
 				return;
 			child_count = $( this ).children( 'div.post' ).length;
 			$( this ).before( '<div class="collapse-msg"><a href="#">&hellip;and ' + child_count + ' more on ' + $( this ).data( 'date' ) + '</a></div>' );
 		} );
+
+		// Handle Instapaper locally-archived content
+		$( '.remote-content.instapaper' )
+			.addClass( 'collapse' ) // make the expand method below work
+			.css( { display: 'none' } ) // hide by default
+			.before( '<div class="collapse-msg"><a href="#">Read locally-archived copy of this content</a></div>' ); // add link to expand
+
+		// Handle expand/collapse
 		$( '.collapse-msg a' ).each( function( index, elem ) {
 			$( this ).click( function( e ) {
 				e.preventDefault();
