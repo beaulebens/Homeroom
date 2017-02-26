@@ -60,7 +60,7 @@ require_once get_template_directory() . '/inc/admin.php';
 
 	// Tag auto-completion
 	$(document).ready(function(){
-		$( '#editor-tags' ).suggest( ajaxurl + '?action=ajax-tag-search&tax=post_tag', { delay: 500, minchars: 2, multiple: true, resultsClass: 'editor-tag-suggest', selectClass: 'editor-tag-suggestion' } );
+		$( '#editor-tags' ).suggest( '<?php echo admin_url( 'admin-ajax.php' ); ?>?action=ajax-tag-search&tax=post_tag', { delay: 500, minchars: 2, multiple: true, resultsClass: 'editor-tag-suggest', selectClass: 'editor-tag-suggestion' } );
 	});
 })(jQuery);
 </script>
