@@ -804,6 +804,7 @@ input[type="submit"] {
 .f-aside,
 .f-link,
 .f-status,
+.f-video,
 #editor {
     margin-left: 73px;
 }
@@ -812,10 +813,12 @@ input[type="submit"] {
 .f-aside:before,
 .f-link:before,
 .f-status:before,
+.f-video:before,
 .f-:after,
 .f-aside:after,
 .f-link:after,
-.f-status:after {
+.f-status:after,
+.f-video:after {
     content: " ";
     display: block;
     width: 0;
@@ -837,7 +840,8 @@ input[type="submit"] {
 .f-:before,
 .f-aside:before,
 .f-link:before,
-.f-status:before {
+.f-status:before,
+.f-video:before {
     border-width: 11px;
     border-left-color: #fdfdfa;
     left: -83px;
@@ -1307,24 +1311,16 @@ article.f-status {
     z-index: -1;
 }
 
-/* Instapaper local content cache styles */
 .remote-content.instapaper {
-  text-align: left;
+  padding: 1em;
+  margin: 1em;
+  background: #f1f1f1;
 }
 
-.remote-content.instapaper figure {
-  text-align: center;
-  margin-bottom: 1em;
-}
-
-.remote-content.instapaper figcaption {
-  font-style: italic;
-}
-
-.remote-content.instapaper aside {
-  font-size: 150%;
-  font-weight: bold;
-  font-style: italic;
+/* ------------------------------------------------------------------------ */
+/* Video/Instagram */
+.instagram-caption {
+  display: none; /* Already have it in the post_title */
 }
 
 /* ------------------------------------------------------------------------ */

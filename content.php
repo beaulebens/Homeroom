@@ -21,9 +21,7 @@
 	&&
 		is_home()
 	&&
-		'image' != $this_post_format
-	&&
-		'' != $this_post_format
+		! in_array( $this_post_format, array( 'image', 'video', '' ) )
 	) {
 		$temp_post = $post;
 		$first = true;
